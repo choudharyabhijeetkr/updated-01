@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Temporary files
+.temp-results/
+temp-parser-test.js
+
+# Reports / generated output
+reports/
+image-spacing-report.txt
+
+# Debug files
+debug-chromium-desktop.png
+
+# Credentials / secrets
+credentials/
+
+# Local/generated files
+node
+npm
+visa-test-automation@1.0.0

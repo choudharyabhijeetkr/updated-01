@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visa Test Automation Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="logo">
+          <i class="fas fa-vial"></i>
+        </div>
+        <div>
+          <h1>Visa Test Automation</h1>
+          <p class="subtitle">End-to-end test runner with HTML reporting</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="helpGuideBtn" class="btn btn-secondary btn-sm header-help-btn" type="button" title="View Directory & File Locations Guide">
+          <i class="fas fa-folder-open"></i> File & Directory Guide
+        </button>
+        <div class="status-badge clickable-status-badge" id="serverStatus" role="button" tabindex="0" title="Click to view System Health & Connection Status">
+          <span class="status-dot"></span>
+          <span id="serverStatusText">Connected</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <main class="main">
+
+    <!-- ─── Configuration Panel ─── -->
+    <section class="card config-panel">
+      <div class="card-header">
+        <h2><i class="fas fa-sliders-h"></i> Configuration</h2>
+      </div>
+      <div class="card-body">
+        <div class="config-grid">
+
+          <!-- Browser Engines -->
+          <div class="config-group">
+            <h3><i class="fas fa-layer-group"></i> Browser Engines</h3>
+            <div class="checkbox-group" id="browserGroup">
+              <label class="checkbox-label">
+                <input type="checkbox" name="browser" value="Chromium" id="browser-chromium" class="browser-checkbox" checked>
+                <span class="checkmark"></span>
+                <i class="fab fa-chrome browser-icon chrome"></i> Chromium
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="browser" value="Firefox" id="browser-firefox" class="browser-checkbox">
+                <span class="checkmark"></span>
+                <i class="fab fa-firefox-browser browser-icon firefox"></i> Firefox
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="browser" value="WebKit" id="browser-webkit" class="browser-checkbox">
+                <span class="checkmark"></span>
+                <i class="fab fa-safari browser-icon safari"></i> WebKit
+              </label>
+            </div>
+          </div>
+
+          <!-- Platforms -->
+          <div class="config-group">
+            <h3><i class="fas fa-laptop-code"></i> Platforms</h3>
+            <div class="checkbox-group" id="deviceGroup">
+              <label class="checkbox-label">
+                <input type="checkbox" name="device" value="Desktop" id="device-desktop" class="device-checkbox" checked>
+                <span class="checkmark"></span>
+                <i class="fas fa-desktop"></i> Desktop
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="device" value="Android" id="device-android" class="device-checkbox">
+                <span class="checkmark"></span>
+                <i class="fab fa-android"></i> Android
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="device" value="iOS" id="device-ios" class="device-checkbox">
+                <span class="checkmark"></span>
+                <i class="fab fa-apple"></i> iOS
+              </label>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div class="config-group">
+            <h3><i class="fas fa-sliders"></i> Execution Parameters</h3>
+            <div class="option-group">
+              <label class="checkbox-label option-tile">
+                <input type="checkbox" id="headlessMode" checked>
+                <span class="checkmark"></span>
+                <div class="option-info">
+                  <span class="option-title"><i class="fas fa-ghost"></i> Headless Mode</span>
+                  <span class="option-desc">Run browser invisible in background</span>
+                </div>
+              </label>
+
+              <div class="input-card">
+                <div class="input-card-header">
+                  <label for="batchSize"><i class="fas fa-layer-group"></i> Batch Concurrency</label>
+                  <span class="input-badge" id="memoryGuardBadge">Auto-Detecting Specs...</span>
+                </div>
+                <div class="input-card-body">
+                  <input type="number" id="batchSize" value="2" min="1" max="10" title="Number of test scripts to execute simultaneously in batches (auto-calculated for your hardware)">
+                  <span class="input-hint" id="memoryGuardHint">Auto-calculated according to device CPU and RAM specifications</span>
+                </div>
+              </div>
+
+              <div class="input-card">
+                <div class="input-card-header">
+                  <label for="retryCount"><i class="fas fa-rotate-right"></i> Max Retries</label>
+                  <span class="input-badge">0 - 10 Retries</span>
+                </div>
+                <div class="input-card-body">
+                  <input type="number" id="retryCount" value="3" min="0" max="10">
+                  <span class="input-hint">Auto-retry attempts on step failure</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Report Preferences -->
+          <div class="config-group">
+            <h3><i class="fas fa-filter"></i> Report Preferences</h3>
+            <div class="option-group">
+              <label class="checkbox-label option-tile">
+                <input type="checkbox" id="settingExcludeStopped" checked>
+                <span class="checkmark"></span>
+                <div class="option-info">
+                  <span class="option-title">
+                    <i class="fas fa-ban"></i> Exclude Stopped Runs
+                    <span class="info-tooltip-container" tabindex="0">
+                      <i class="fas fa-info-circle tooltip-icon"></i>
+                      <span class="tooltip-popup">
+                        <strong>Exclude Stopped Runs:</strong><br>
+                        When enabled, test runs that were manually stopped or cancelled before finishing will be completely omitted from generated HTML & Excel reports.
+                      </span>
+                    </span>
+                  </span>
+                  <span class="option-desc">Do not show stopped runs in report</span>
+                </div>
+              </label>
+
+              <label class="checkbox-label option-tile">
+                <input type="checkbox" id="settingHideIncomplete" checked>
+                <span class="checkmark"></span>
+                <div class="option-info">
+                  <span class="option-title">
+                    <i class="fas fa-eye-slash"></i> Hide Incomplete Tests
+                    <span class="info-tooltip-container" tabindex="0">
+                      <i class="fas fa-info-circle tooltip-icon"></i>
+                      <span class="tooltip-popup">
+                        <strong>Hide Incomplete Tests:</strong><br>
+                        When enabled, pending, halted, or non-executed test cases inside session runs are hidden from generated HTML & Excel reports, displaying only completed PASS/FAIL test items.
+                      </span>
+                    </span>
+                  </span>
+                  <span class="option-desc">Show only completed PASS/FAIL test items</span>
+                </div>
+              </label>
+            </div>
+
+            <h3 class="section-subheading" style="margin-top: 14px;"><i class="fas fa-camera"></i> Screenshot Capture</h3>
+            <div class="option-group">
+              <label class="checkbox-label option-tile">
+                <input type="checkbox" id="settingEnableScreenshot">
+                <span class="checkmark"></span>
+                <div class="option-info">
+                  <span class="option-title">
+                    <i class="fas fa-camera"></i> Screenshot Capture
+                    <span class="info-tooltip-container" tabindex="0">
+                      <i class="fas fa-info-circle tooltip-icon"></i>
+                      <span class="tooltip-popup screenshot-tooltip">
+                        <strong>Screenshot Capture:</strong><br>
+                        Enable this option to capture screenshots defined inside test scripts.<br><br>
+                        <strong class="tooltip-subheading">How to use:</strong>
+                        <code class="tooltip-code">await captureScreenshot(page, 'payment-page');</code>
+                        <span class="tooltip-text-block">
+                          Add this line anywhere in your test where you want to capture a screenshot. Replace <em>payment-page</em> with your own screenshot name.
+                        </span>
+                        <hr class="tooltip-divider">
+                        <div class="tooltip-mode-status">
+                          <div><strong class="mode-off">OFF:</strong> Screenshot calls are ignored and no screenshots are created.</div>
+                          <div><strong class="mode-on">ON:</strong> Screenshot calls are executed and the screenshots are added to the report.</div>
+                        </div>
+                      </span>
+                    </span>
+                  </span>
+                  <span class="option-desc">Capture explicitly requested test screenshots</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Test List Panel ─── -->
+    <section class="card test-list-panel">
+      <div class="card-header test-panel-header">
+        <div class="test-panel-title">
+          <h2><i class="fas fa-list-check"></i> Test Suites & Scripts</h2>
+          <div class="stats-pills">
+            <span class="stat-pill total" title="Total Available Tests">
+              <i class="fas fa-cubes"></i> <strong id="statTotal">0</strong> Total
+            </span>
+            <span class="stat-pill selected" title="Selected Tests">
+              <i class="fas fa-check-circle"></i> <strong id="statSelected">0</strong> Selected
+            </span>
+            <span class="stat-pill filtered hidden" id="statFilteredPill" title="Filtered Tests">
+              <i class="fas fa-filter"></i> <strong id="statFiltered">0</strong> Filtered
+            </span>
+          </div>
+        </div>
+
+        <div class="test-toolbar-actions">
+          <button class="btn btn-sm btn-ghost" id="selectAllBtn" title="Select all visible tests">
+            <i class="fas fa-check-double"></i> Select All
+          </button>
+          <button class="btn btn-sm btn-ghost" id="deselectAllBtn" title="Clear test selection">
+            <i class="fas fa-times"></i> Clear
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body test-panel-body">
+        <div class="test-search-wrapper">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="testSearch" placeholder="Search tests by country, name, or filename..." autocomplete="off">
+          <button class="clear-search-btn hidden" id="clearSearchBtn" title="Clear search">
+            <i class="fas fa-times-circle"></i>
+          </button>
+        </div>
+
+        <div class="test-grid-container" id="testListContainer">
+          <div class="test-grid" id="testList">
+            <!-- Populated dynamically by JS -->
+            <div class="loading-state">
+              <i class="fas fa-spinner fa-spin"></i>
+              <p>Loading test suites...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Action Bar & Selection Summary ─── -->
+    <section class="action-bar-card" id="actionBar">
+      <div class="summary-details-grid">
+        <div class="summary-box">
+          <div class="summary-box-title"><i class="fas fa-file-code"></i> Selected Tests</div>
+          <div class="summary-box-value" id="summaryTests">0 Tests</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-box-title"><i class="fas fa-layer-group"></i> Selected Engines</div>
+          <div class="summary-box-value" id="summaryBrowsers">1 (Chromium)</div>
+        </div>
+        <div class="summary-box">
+          <div class="summary-box-title"><i class="fas fa-laptop-code"></i> Selected Platforms</div>
+          <div class="summary-box-value" id="summaryDevices">1 (Desktop)</div>
+        </div>
+      </div>
+
+      <div class="summary-target-container">
+        <div class="target-box">
+          <div class="target-title">Execution Target</div>
+          <div class="target-equation" id="summaryEquation">0 Tests × 1 Engine × 1 Platform = 0 Executions</div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-primary btn-lg" id="runSelectedBtn" disabled>
+          <i class="fas fa-play"></i> Run Selected
+        </button>
+        <button class="btn btn-secondary btn-lg" id="runAllBtn">
+          <i class="fas fa-forward"></i> Run All
+        </button>
+      </div>
+    </section>
+
+    <!-- ─── Progress Panel ─── -->
+    <section class="card progress-panel" id="progressPanel" style="display: none;">
+      <div class="card-header" style="flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
+        <div>
+          <h2 id="sessionHeader"><i class="fas fa-chart-bar"></i> Execution Session</h2>
+          <div class="session-subtext" id="sessionSubtext" style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+            Target: 0 Executions
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <div class="progress-stats">
+            <span class="stat pass" title="Passed"><i class="fas fa-check-circle"></i> <span id="passCount">0</span></span>
+            <span class="stat fail" title="Failed"><i class="fas fa-times-circle"></i> <span id="failCount">0</span></span>
+            <span class="stat pending" title="Pending"><i class="fas fa-clock"></i> <span id="pendingCount">0</span></span>
+            <span class="stat info" style="color: var(--accent);" title="Completed / Total"><i class="fas fa-tasks"></i> <span id="completedCount">0</span>/<span id="totalCombinationsCount">0</span></span>
+          </div>
+          <button class="btn btn-sm btn-danger" id="stopExecutionBtn" disabled>
+            <i class="fas fa-stop-circle"></i> Stop Execution
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Progress bar -->
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="progress-text" id="progressText">0%</span>
+        </div>
+
+        <!-- Live test results table -->
+        <div class="table-responsive-wrapper">
+          <table class="run-details-table">
+            <thead>
+              <tr>
+                <th>Test Script</th>
+                <th>Environment</th>
+                <th>Status</th>
+                <th>Attempts</th>
+                <th>Payment URL</th>
+                <th>Screenshot</th>
+                <th>Duration</th>
+                <th>Error Details</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="resultsList">
+              <!-- Populated dynamically by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Report Panel ─── -->
+    <section class="card report-panel" id="reportPanel" style="display: none;">
+      <div class="card-header">
+        <h2><i class="fas fa-chart-line"></i> Test Automation Reports</h2>
+      </div>
+      <div class="card-body">
+        <div class="report-actions">
+          <button class="btn btn-primary btn-lg" id="openHtmlReportBtn">
+            <i class="fas fa-external-link-alt"></i> Open Full HTML Report
+          </button>
+          <button class="btn btn-outline btn-lg" id="openFolderBtn">
+            <i class="fas fa-folder-open"></i> Open Reports Folder
+          </button>
+          <button class="btn btn-danger-outline btn-lg" id="resetDataBtn">
+            <i class="fas fa-trash-alt"></i> Clear Reports / Reset Test Data
+          </button>
+        </div>
+        <p class="report-note" style="margin-top: 8px;">
+          <i class="fas fa-info-circle"></i>
+          HTML report includes execution history, screenshots, payment URLs, and modal error details. Automatically updated after every execution run.
+        </p>
+
+        <!-- Live Inline HTML Report Frame -->
+        <div class="report-viewer-container" id="reportViewerContainer" style="margin-top: 12px;">
+          <iframe id="reportFrame" src="/reports/execution-report.html" style="width: 100%; height: 500px; border: 1px solid #cbd5e1; border-radius: 10px; background: white;"></iframe>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════ TOAST CONTAINER ═══════════════ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ═══════════════ ERROR DETAILS MODAL ═══════════════ -->
+  <div class="modal-backdrop hidden" id="errorModal" role="dialog" aria-modal="true" aria-labelledby="errorModalTitle">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="errorModalTitle">
+          <i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i> Execution Error Details
+        </h3>
+        <button type="button" class="modal-close-btn" id="errorModalCloseBtn" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="error-meta" id="errorModalMeta"></div>
+        <div class="error-trace-container">
+          <pre class="error-stack-trace" id="errorModalTrace"></pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-outline" id="errorModalCopyBtn">
+          <i class="fas fa-copy"></i> Copy Error
+        </button>
+        <button type="button" class="btn btn-sm btn-primary" id="errorModalOkBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ FILE & DIRECTORY GUIDE MODAL ═══════════════ -->
+  <div class="modal-backdrop hidden" id="helpGuideModal" role="dialog" aria-modal="true" aria-labelledby="helpGuideModalTitle">
+    <div class="modal-container modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="helpGuideModalTitle">
+          <i class="fas fa-folder-open" style="color: var(--accent);"></i> Project File & Directory Reference
+        </h3>
+        <button type="button" class="modal-close-btn" id="helpGuideModalCloseBtn" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 16px;">
+        <p style="margin: 0; color: var(--text-secondary); font-size: 13.5px; line-height: 1.5;">
+          Quick structural overview of all project directories, report storage, shared screenshot paths, test specs, and configuration files.
+        </p>
+
+        <div class="guide-grid">
+          
+          <!-- Reports Directory -->
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <i class="fas fa-chart-line" style="color: #2563eb;"></i>
+              <span>/reports</span>
+            </div>
+            <p class="guide-card-desc">
+              Stores generated output report files created automatically after test executions.
+            </p>
+            <ul class="guide-card-list">
+              <li><code>reports/execution-report.html</code>: Standalone interactive dashboard for live test status, summary metrics, and image previews.</li>
+              <li><code>reports/test-reports.xlsx</code>: Auto-updated Excel workbook organized by execution date sheets with clickable image links.</li>
+            </ul>
+          </div>
+
+          <!-- Shared Screenshots Directory -->
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <i class="fas fa-camera" style="color: #059669;"></i>
+              <span>/screenshots</span>
+            </div>
+            <p class="guide-card-desc">
+              Single shared directory for screenshots used by BOTH the HTML report and Excel report.
+            </p>
+            <ul class="guide-card-list">
+              <li><strong>Shared Storage:</strong> Prevents duplicate image files by serving both HTML and Excel reports from one place.</li>
+              <li><strong>Captured Screenshots:</strong> When Screenshot Capture mode is ON, calling <code>captureScreenshot()</code> creates timestamped subfolders: <code>/screenshots/&lt;timestamp&gt;/&lt;spec-name&gt;/&lt;step-name&gt;.png</code>.</li>
+              <li><strong>When Disabled:</strong> When Screenshot Capture is OFF, no screenshot files or folders are created.</li>
+            </ul>
+          </div>
+
+          <!-- Test Specs Directory -->
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <i class="fas fa-code" style="color: #7c3aed;"></i>
+              <span>/tests/spec</span>
+            </div>
+            <p class="guide-card-desc">
+              Directory containing all Playwright test specification files.
+            </p>
+            <ul class="guide-card-list">
+              <li>Contains end-to-end automation scripts that execute form navigation, input completion, and payment URL detection.</li>
+              <li>Utilizes helper methods for screenshot capturing and custom assertions.</li>
+            </ul>
+          </div>
+
+          <!-- Assets Directory -->
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <i class="fas fa-file-upload" style="color: #0284c7;"></i>
+              <span>/tests/assets</span>
+            </div>
+            <p class="guide-card-desc">
+              Storage for media and document assets required during test execution.
+            </p>
+            <ul class="guide-card-list">
+              <li>Contains sample applicant photos and document attachments uploaded during form submission tests.</li>
+            </ul>
+          </div>
+
+          <!-- Utilities Directory -->
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <i class="fas fa-tools" style="color: #4f46e5;"></i>
+              <span>/utils</span>
+            </div>
+            <p class="guide-card-desc">
+              Test execution framework utilities and helper functions.
+            </p>
+            <ul class="guide-card-list">
+              <li><code>utils/screenshot.ts</code>: Helper utility providing <code>captureScreenshot()</code> for saving step-by-step test evidence.</li>
+              <li><code>utils/baseTest.ts</code>: Base Playwright test fixture wrapping execution state, retries, and error handling.</li>
+            </ul>
+          </div>
+
+          <!-- Configuration Files -->
+          <div class="guide-card">
+            <div class="guide-card-header">
+              <i class="fas fa-sliders-h" style="color: #d97706;"></i>
+              <span>Configuration Files</span>
+            </div>
+            <p class="guide-card-desc">
+              Project configuration and global settings files.
+            </p>
+            <ul class="guide-card-list">
+              <li><code>test-config.json</code>: Main configuration file controlling target form inputs, concurrency, retries, and screenshot capture toggles.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-primary" id="helpGuideOkBtn">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SYSTEM HEALTH MODAL ═══════════════ -->
+  <div class="modal-backdrop hidden" id="healthStatusModal" role="dialog" aria-modal="true">
+    <div class="modal-container health-modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          <i class="fas fa-heartbeat" style="color: #2563eb;"></i> System Health & Connection
+        </h3>
+        <button class="modal-close-btn" id="closeHealthModalBtn" title="Close Modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Health Status Header Banner -->
+        <div class="health-overall-banner" id="healthOverallBanner">
+          <div class="health-banner-status">
+            <span class="health-banner-dot" id="healthBannerDot"></span>
+            <span class="health-banner-text" id="healthBannerText">Checking status...</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="recheckHealthBtn" type="button" title="Run manual health check">
+            <i class="fas fa-sync-alt" id="recheckIcon"></i> Re-check Status
+          </button>
+        </div>
+
+        <!-- Health Checklist Items -->
+        <div class="health-check-grid" id="healthCheckList">
+          <!-- Populated dynamically by app.js -->
+        </div>
+
+        <!-- Guidance Alert Box (shown if attention needed) -->
+        <div class="health-guidance-box hidden" id="healthGuidanceBox">
+          <div class="health-guidance-header">
+            <i class="fas fa-lightbulb"></i>
+            <span>Action Guidance</span>
+          </div>
+          <div class="health-guidance-content" id="healthGuidanceText">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="closeHealthModalFooterBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
