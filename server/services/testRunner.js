@@ -51,9 +51,13 @@ async function runSingleExecution({ testFile, browser, device, retries = 2, head
     let args = [];
     let useShell = false;
 
-    const cliPath = path.join(process.cwd(), 'node_modules', '@playwright/test', 'cli.js');
-    if (fs.existsSync(cliPath)) {
-      args = [cliPath, 'test', '--config', configPath];
+    const pwTestCli = path.join(process.cwd(), 'node_modules', '@playwright/test', 'cli.js');
+    const pwCli = path.join(process.cwd(), 'node_modules', 'playwright', 'cli.js');
+
+    if (fs.existsSync(pwTestCli)) {
+      args = [pwTestCli, 'test', '--config', configPath];
+    } else if (fs.existsSync(pwCli)) {
+      args = [pwCli, 'test', '--config', configPath];
     } else if (isWindows) {
       const localCmd = path.join(process.cwd(), 'node_modules', '.bin', 'playwright.cmd');
       if (fs.existsSync(localCmd)) {
@@ -63,10 +67,12 @@ async function runSingleExecution({ testFile, browser, device, retries = 2, head
       } else {
         cmd = 'cmd.exe';
         args = ['/c', 'npx', 'playwright', 'test', '--config', configPath];
+        useShell = true;
       }
     } else {
       cmd = 'npx';
       args = ['playwright', 'test', '--config', configPath];
+      useShell = true;
     }
 
     console.log(`[testRunner] Spawning single execution for ${testFile} [${device}-${browser}]...`);

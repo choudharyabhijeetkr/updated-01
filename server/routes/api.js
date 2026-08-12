@@ -63,27 +63,25 @@ router.get('/health-check', (req, res) => {
       } catch (e) {}
     } catch (e) {}
 
-    // Count .spec.ts / .spec.js files
-    let specCount = 0;
-    const testsDir = path.join(process.cwd(), 'tests', 'spec');
-    if (fs.existsSync(testsDir)) {
-      const files = fs.readdirSync(testsDir);
-      specCount = files.filter((f) => f.endsWith('.spec.ts') || f.endsWith('.spec.js')).length;
-    }
-
     const isLowMemory = freeMemMB < 600;
+    const isLinux = process.platform === 'linux';
 
     res.json({
       apiReachable: true,
+      appTitle: process.env.APP_TITLE || 'Playwright Test Automation',
       playwrightAvailable,
       chromiumInstalled,
       firefoxInstalled,
       webkitInstalled,
+      browserVerificationMode: 'executable_path_only',
+      osPlatform: process.platform,
+      osNote: isLinux
+        ? 'Browser paths verified. Host environment must supply required OS shared libraries.'
+        : 'Browser paths verified.',
       totalMemMB,
       freeMemMB,
       cpuCores,
       isLowMemory,
-      specCount,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
@@ -108,7 +106,8 @@ router.get('/system-status', (req, res) => {
 // ── GET /api/tests ── list available test files
 router.get('/tests', (req, res) => {
   try {
-    const testsDir = path.join(process.cwd(), 'tests', 'spec');
+    const testDirRel = process.env.TEST_DIR || './tests/spec';
+    const testsDir = path.resolve(process.cwd(), testDirRel);
     if (!fs.existsSync(testsDir)) {
       return res.json({ tests: [] });
     }

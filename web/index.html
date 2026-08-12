@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visa Test Automation Dashboard</title>
+  <title>Playwright Test Automation Dashboard</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -18,7 +18,7 @@
           <i class="fas fa-vial"></i>
         </div>
         <div>
-          <h1>Visa Test Automation</h1>
+          <h1 id="appTitleHeading">Playwright Test Automation</h1>
           <p class="subtitle">End-to-end test runner with HTML reporting</p>
         </div>
       </div>
@@ -334,7 +334,7 @@
                 <th>Environment</th>
                 <th>Status</th>
                 <th>Attempts</th>
-                <th>Payment URL</th>
+                <th>Captured URL</th>
                 <th>Screenshot</th>
                 <th>Duration</th>
                 <th>Error Details</th>
@@ -368,7 +368,7 @@
         </div>
         <p class="report-note" style="margin-top: 8px;">
           <i class="fas fa-info-circle"></i>
-          HTML report includes execution history, screenshots, payment URLs, and modal error details. Automatically updated after every execution run.
+          HTML report includes execution history, screenshots, captured URLs, and modal error details. Automatically updated after every execution run.
         </p>
 
         <!-- Live Inline HTML Report Frame -->
@@ -464,7 +464,7 @@
               Directory containing all Playwright test specification files.
             </p>
             <ul class="guide-card-list">
-              <li>Contains end-to-end automation scripts that execute form navigation, input completion, and payment URL detection.</li>
+              <li>Contains end-to-end automation scripts that execute Playwright test flows and assertions.</li>
               <li>Utilizes helper methods for screenshot capturing and custom assertions.</li>
             </ul>
           </div>

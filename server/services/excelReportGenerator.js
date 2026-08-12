@@ -31,7 +31,6 @@ function formatDateKey(dateInput) {
 function formatTestTitle(filename) {
   if (!filename) return '';
   let name = filename.replace(/\.(spec|test)\.(ts|js)$/i, '');
-  name = name.replace(/e[-_]?visa/gi, 'E-Visa');
   name = name.replace(/[-_]/g, ' ');
   return name.split(' ')
     .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1) : '')
@@ -63,7 +62,7 @@ async function updateExcelReportDisk() {
     }
 
     if (isNewFile) {
-      workbook.creator = 'Visa Test Automation';
+      workbook.creator = process.env.APP_TITLE || 'Playwright Test Automation';
       workbook.created = new Date();
     }
 
@@ -129,11 +128,11 @@ async function updateExcelReportDisk() {
         const envStr = `${exec.device || 'Desktop'} / ${exec.browser || 'Chromium'}`;
         const dateTimeStr = exec.startTime ? new Date(exec.startTime).toLocaleString() : new Date(session.createdAt).toLocaleString();
 
-        // Prepare Payment URL
+        // Prepare Captured URL
         let paymentUrlObj = '—';
         if (exec.paymentUrl && exec.paymentUrl !== 'N/A') {
           if (/^https?:\/\//i.test(exec.paymentUrl)) {
-            paymentUrlObj = { text: 'Open URL', hyperlink: exec.paymentUrl, tooltip: 'Open Payment URL' };
+            paymentUrlObj = { text: 'Open URL', hyperlink: exec.paymentUrl, tooltip: 'Open Captured URL' };
           } else {
             paymentUrlObj = exec.paymentUrl;
           }
@@ -200,7 +199,7 @@ function setupWorksheetHeaders(worksheet) {
     { header: 'Environment', key: 'environment', width: 24 },
     { header: 'Status', key: 'status', width: 14 },
     { header: 'Attempts', key: 'attempts', width: 14 },
-    { header: 'Payment URL', key: 'paymentUrl', width: 16 },
+    { header: 'Captured URL', key: 'paymentUrl', width: 20 },
     { header: 'Screenshot', key: 'screenshot', width: 16 },
     { header: 'Duration', key: 'duration', width: 12 },
     { header: 'Error Details', key: 'error', width: 45 },

@@ -55,11 +55,30 @@ const DEVICE_MAP = {
   },
 };
 
+function isContainerEnvironment() {
+  if (process.platform !== 'linux') return false;
+  return Boolean(
+    process.env.CONTAINER === 'true' ||
+    process.env.DOCKER === 'true' ||
+    process.env.KUBERNETES_SERVICE_HOST ||
+    process.env.CI ||
+    fs.existsSync('/.dockerenv') ||
+    fs.existsSync('/run/.containerenv')
+  );
+}
+
+function getLaunchArgs() {
+  if (isContainerEnvironment()) {
+    return ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'];
+  }
+  return [];
+}
+
 /**
  * Build the Playwright config source for a single execution.
  *
  * @param {Object} options
- * @param {string} options.testFile - Spec filename relative to tests/spec/ (e.g. 'bahrain-visa.spec.ts')
+ * @param {string} options.testFile - Spec filename relative to configured test directory
  * @param {string} options.browser - One of BROWSER_MAP keys
  * @param {string} options.device - One of DEVICE_MAP keys
  * @param {number} options.retries - Max retries for this execution
@@ -75,6 +94,9 @@ function generateSingleExecutionConfig({ testFile, browser, device, retries, hea
   if (!testFile) throw new Error('testFile is required');
 
   const projectName = `${device}-${browser}`;
+  const testDir = process.env.TEST_DIR || './tests/spec';
+  const normalizedTestDir = testDir.replace(/\\/g, '/');
+  const normalizedTestFile = testFile.replace(/\\/g, '/');
 
   const useLines = [];
   if (deviceCfg.playwrightDevice) {
@@ -88,15 +110,12 @@ function generateSingleExecutionConfig({ testFile, browser, device, retries, hea
   }
   useLines.push(`actionTimeout: 15000,`);
   useLines.push(`navigationTimeout: 30000,`);
+
+  const launchArgs = getLaunchArgs();
   useLines.push(`launchOptions: {
         headless: ${headless},
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-extensions', '--disable-background-networking'],
+        args: ${JSON.stringify(launchArgs)},
       },`);
-
-  // Exact, anchored match on the single file's basename — avoids the old
-  // bug where a plain regex-union of filenames could match unrelated
-  // specs whose names happened to be substrings of each other.
-  const escapedFile = testFile.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   return `/**
  * Auto-generated single-execution Playwright config
@@ -108,8 +127,8 @@ function generateSingleExecutionConfig({ testFile, browser, device, retries, hea
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests/spec',
-  testMatch: '**/${testFile}',
+  testDir: '${normalizedTestDir}',
+  testMatch: '**/${normalizedTestFile}',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: ${retries},

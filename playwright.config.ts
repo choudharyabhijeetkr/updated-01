@@ -12,6 +12,24 @@
  */
 
 import { defineConfig, devices } from '@playwright/test';
+import * as fs from 'fs';
+
+const isLinux = process.platform === 'linux';
+const isContainer = isLinux && (
+  process.env.CONTAINER === 'true' ||
+  process.env.DOCKER === 'true' ||
+  Boolean(process.env.KUBERNETES_SERVICE_HOST) ||
+  Boolean(process.env.CI) ||
+  fs.existsSync('/.dockerenv') ||
+  fs.existsSync('/run/.containerenv')
+);
+
+const getContainerLaunchArgs = () => {
+  if (isContainer) {
+    return ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'];
+  }
+  return [];
+};
 
 export default defineConfig({
   testDir: './tests/spec',
@@ -60,7 +78,7 @@ export default defineConfig({
         viewport: { width: 1920, height: 1080 },
         browserName: 'chromium',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-extensions', '--disable-background-networking', '--start-maximized'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -68,9 +86,9 @@ export default defineConfig({
       name: 'Desktop-Firefox',
       use: {
         viewport: { width: 1920, height: 1080 },
-        browserName: 'chromium',
+        browserName: 'firefox',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -78,9 +96,9 @@ export default defineConfig({
       name: 'Desktop-Safari',
       use: {
         viewport: { width: 1920, height: 1080 },
-        browserName: 'chromium',
+        browserName: 'webkit',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -90,7 +108,7 @@ export default defineConfig({
         viewport: { width: 1920, height: 1080 },
         browserName: 'chromium',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--start-maximized'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -102,7 +120,7 @@ export default defineConfig({
         ...devices['iPhone 14'],
         browserName: 'chromium',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -110,9 +128,9 @@ export default defineConfig({
       name: 'iPhone 14-Firefox',
       use: {
         ...devices['iPhone 14'],
-        browserName: 'chromium',
+        browserName: 'firefox',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -120,9 +138,9 @@ export default defineConfig({
       name: 'iPhone 14-Safari',
       use: {
         ...devices['iPhone 14'],
-        browserName: 'chromium',
+        browserName: 'webkit',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -132,7 +150,7 @@ export default defineConfig({
         ...devices['iPhone 14'],
         browserName: 'chromium',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -144,7 +162,7 @@ export default defineConfig({
         ...devices['Pixel 5'],
         browserName: 'chromium',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -152,9 +170,9 @@ export default defineConfig({
       name: 'Android-Firefox',
       use: {
         ...devices['Pixel 5'],
-        browserName: 'chromium',
+        browserName: 'firefox',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -162,9 +180,9 @@ export default defineConfig({
       name: 'Android-Safari',
       use: {
         ...devices['Pixel 5'],
-        browserName: 'chromium',
+        browserName: 'webkit',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },
@@ -174,7 +192,7 @@ export default defineConfig({
         ...devices['Pixel 5'],
         browserName: 'chromium',
         launchOptions: {
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getContainerLaunchArgs(),
         },
       },
     },

@@ -71,7 +71,7 @@ function generateReportHtml(data) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Visa Automation Test Report</title>
+  <title>Playwright Automation Test Report</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -336,7 +336,7 @@ function generateReportHtml(data) {
 <body>
   <div class="container">
     <div class="page-header">
-      <h1><i class="fas fa-vial"></i> Visa Test Automation Report</h1>
+      <h1><i class="fas fa-vial"></i> Test Automation Report</h1>
     </div>
     <div id="app">Loading report data...</div>
   </div>
@@ -374,7 +374,6 @@ function generateReportHtml(data) {
     function formatTestTitle(filename) {
       if (!filename) return '';
       let name = filename.replace(/\\.(spec|test)\\.(ts|js)$/i, '');
-      name = name.replace(/e[-_]?visa/gi, 'E-Visa');
       name = name.replace(/[-_]/g, ' ');
       return name.split(' ')
         .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1) : '')
@@ -595,7 +594,7 @@ function generateReportHtml(data) {
                     '<th>Environment</th>' +
                     '<th>Status</th>' +
                     '<th>Attempts</th>' +
-                    '<th>Payment URL</th>' +
+                    '<th>Captured URL</th>' +
                     '<th>Screenshot</th>' +
                     '<th>Duration</th>' +
                     '<th>Error Details</th>' +

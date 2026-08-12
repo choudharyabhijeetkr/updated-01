@@ -132,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Helpers ──
   function formatTestTitle(filename) {
     let name = filename.replace(/\.(spec|test)\.(ts|js)$/i, '');
-    name = name.replace(/e[-_]?visa/gi, 'E-Visa');
     name = name.replace(/[-_]/g, ' ');
     return name.split(' ')
       .map(word => word ? word.charAt(0).toUpperCase() + word.slice(1) : '')
@@ -201,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (allTests.length === 0) {
-      testList.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><p>No spec files found in tests/spec/</p></div>';
+      testList.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i><p>No spec files found in configured test directory</p></div>';
       updateButtonStates();
       return;
     }
@@ -1014,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state = 'disconnected';
       overallText = 'Disconnected — Backend Server Unreachable';
       badgeText = 'Disconnected';
-    } else if (!data.playwrightAvailable || data.specCount === 0 || (!data.chromiumInstalled && !data.firefoxInstalled && !data.webkitInstalled)) {
+    } else if (!data.playwrightAvailable || (!data.chromiumInstalled && !data.firefoxInstalled && !data.webkitInstalled)) {
       state = 'error';
       overallText = 'Critical Error — System cannot execute test suite';
       badgeText = 'Critical Error';
@@ -1022,6 +1021,13 @@ document.addEventListener('DOMContentLoaded', () => {
       state = 'warning';
       overallText = 'Action Needed — System functional with warnings';
       badgeText = 'Action Needed';
+    }
+
+    // 0. Update App Title Heading if provided by server
+    if (data.appTitle) {
+      const appHeading = document.getElementById('appTitleHeading');
+      if (appHeading) appHeading.textContent = data.appTitle;
+      document.title = `${data.appTitle} Dashboard`;
     }
 
     // 1. Update Header Badge
@@ -1091,13 +1097,6 @@ document.addEventListener('DOMContentLoaded', () => {
           status: data.isLowMemory ? 'warning' : 'ready',
           badge: data.isLowMemory ? 'Low RAM' : 'Adequate',
           icon: 'fa-microchip'
-        },
-        {
-          title: 'Test Spec Files',
-          subtitle: `${data.specCount} spec file(s) in /tests/spec/`,
-          status: data.specCount > 0 ? 'ready' : 'error',
-          badge: data.specCount > 0 ? `${data.specCount} Specs` : 'No Specs',
-          icon: 'fa-file-code'
         }
       ];
 
@@ -1153,10 +1152,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (data.isLowMemory) {
       tips.push(`Free RAM is low (${data.freeMemMB}MB). Lower the Batch Concurrency setting to avoid memory throttling.`);
-    }
-
-    if (data.specCount === 0) {
-      tips.push('No <code>.spec.ts</code> files found in <code>/tests/spec/</code> directory. Add test files to run automation.');
     }
 
     if (healthGuidanceBox && healthGuidanceText) {
