@@ -201,7 +201,7 @@ function enqueueSession({ testFiles, browsers, devices, retries, headless, batch
     runQueue.push(exec.id);
   }
 
-  updateReportDisk();
+  updateReportDisk({ immediate: true });
 
   process.nextTick(processQueue);
 

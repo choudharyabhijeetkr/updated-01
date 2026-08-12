@@ -119,7 +119,7 @@
                     <i class="fas fa-rotate-right"></i> Max Retries
                     <span class="info-tooltip-container" tabindex="0">
                       <i class="fas fa-info-circle tooltip-icon"></i>
-                      <span class="tooltip-popup">
+                      <span class="tooltip-popup tooltip-bottom align-left">
                         <strong>Max Retries:</strong><br>
                         Automatically re-executes test steps when failures occur (e.g., temporary network glitches, slow portal/API responses, missing or delayed DOM locators, CAPTCHA interceptions, or element timeouts).
                       </span>
@@ -147,7 +147,7 @@
                     <i class="fas fa-ban"></i> Exclude Stopped Runs
                     <span class="info-tooltip-container" tabindex="0">
                       <i class="fas fa-info-circle tooltip-icon"></i>
-                      <span class="tooltip-popup">
+                      <span class="tooltip-popup tooltip-bottom align-right">
                         <strong>Exclude Stopped Runs:</strong><br>
                         When enabled, test runs that were manually stopped or cancelled before finishing will be completely omitted from generated HTML & Excel reports.
                       </span>
@@ -165,7 +165,7 @@
                     <i class="fas fa-eye-slash"></i> Hide Incomplete Tests
                     <span class="info-tooltip-container" tabindex="0">
                       <i class="fas fa-info-circle tooltip-icon"></i>
-                      <span class="tooltip-popup">
+                      <span class="tooltip-popup tooltip-bottom align-right">
                         <strong>Hide Incomplete Tests:</strong><br>
                         When enabled, pending, halted, or non-executed test cases inside session runs are hidden from generated HTML & Excel reports, displaying only completed PASS/FAIL test items.
                       </span>
@@ -186,7 +186,7 @@
                     <i class="fas fa-camera"></i> Screenshot Capture
                     <span class="info-tooltip-container" tabindex="0">
                       <i class="fas fa-info-circle tooltip-icon"></i>
-                      <span class="tooltip-popup screenshot-tooltip">
+                      <span class="tooltip-popup tooltip-bottom align-right screenshot-tooltip">
                         <strong>Screenshot Capture:</strong><br>
                         Enable this option to capture screenshots defined inside test scripts.<br><br>
                         <strong class="tooltip-subheading">How to use:</strong>
@@ -350,7 +350,7 @@
     </section>
 
     <!-- ─── Report Panel ─── -->
-    <section class="card report-panel" id="reportPanel" style="display: none;">
+    <section class="card report-panel" id="reportPanel">
       <div class="card-header">
         <h2><i class="fas fa-chart-line"></i> Test Automation Reports</h2>
       </div>

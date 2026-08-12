@@ -757,15 +757,25 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/api/report');
       const data = await res.json();
-      if (data.exists && reportPanel) {
+      if (reportPanel) {
         reportPanel.style.display = 'block';
-        const iframe = document.getElementById('reportFrame');
-        if (iframe) iframe.src = data.path + '?t=' + Date.now();
-        if (openHtmlReportBtn) openHtmlReportBtn.disabled = false;
-        if (openFolderBtn) openFolderBtn.disabled = false;
-      } else {
-        if (openHtmlReportBtn) openHtmlReportBtn.disabled = true;
-        if (openFolderBtn) openFolderBtn.disabled = true;
+      }
+      const iframe = document.getElementById('reportFrame');
+      if (iframe && data.path) {
+        iframe.src = data.path + '?t=' + Date.now();
+      }
+
+      // Check session history to properly manage action button states
+      try {
+        const sessRes = await fetch('/api/sessions');
+        const sessData = await sessRes.json();
+        const hasData = Array.isArray(sessData.sessions) && sessData.sessions.length > 0;
+        if (openHtmlReportBtn) openHtmlReportBtn.disabled = !hasData;
+        if (openFolderBtn) openFolderBtn.disabled = !hasData;
+        if (resetDataBtn) resetDataBtn.disabled = !hasData || isRunActive || isStartingRun || isResettingData;
+      } catch (e) {
+        if (openHtmlReportBtn) openHtmlReportBtn.disabled = !data.exists;
+        if (openFolderBtn) openFolderBtn.disabled = !data.exists;
       }
     } catch (err) {
       console.error('Error checking report:', err);
@@ -1200,4 +1210,153 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Run health check ONCE on initial dashboard load
   runLightweightHealthCheck();
+
+  // ─── DYNAMIC GLOBAL FLOATING TOOLTIP SYSTEM ───
+  // Creates a single portal element directly on <body> to bypass all card/grid overflow and stacking contexts.
+  let globalTooltipEl = document.getElementById('global-floating-tooltip');
+  if (!globalTooltipEl) {
+    globalTooltipEl = document.createElement('div');
+    globalTooltipEl.id = 'global-floating-tooltip';
+    globalTooltipEl.className = 'global-floating-tooltip';
+    globalTooltipEl.innerHTML = `
+      <div id="globalTooltipContent"></div>
+      <div class="tooltip-arrow" id="globalTooltipArrow"></div>
+    `;
+    document.body.appendChild(globalTooltipEl);
+  }
+
+  let activeTooltipContainer = null;
+
+  function positionFloatingTooltip(container) {
+    if (!globalTooltipEl || !container) return;
+    const sourcePopup = container.querySelector('.tooltip-popup');
+    if (!sourcePopup) return;
+
+    const contentEl = document.getElementById('globalTooltipContent');
+    const arrowEl = document.getElementById('globalTooltipArrow');
+    if (!contentEl || !arrowEl) return;
+
+    // Populate content
+    contentEl.innerHTML = sourcePopup.innerHTML;
+
+    // Check special width mode (e.g. screenshot guide)
+    if (sourcePopup.classList.contains('screenshot-tooltip')) {
+      globalTooltipEl.classList.add('screenshot-tooltip-mode');
+    } else {
+      globalTooltipEl.classList.remove('screenshot-tooltip-mode');
+    }
+
+    // Get trigger target icon bounds
+    const triggerIcon = container.querySelector('.tooltip-icon') || container;
+    const rect = triggerIcon.getBoundingClientRect();
+    const triggerCenterX = rect.left + rect.width / 2;
+
+    // Make visible temporarily offscreen to measure real rendered dimensions
+    globalTooltipEl.style.left = '-9999px';
+    globalTooltipEl.style.top = '-9999px';
+    globalTooltipEl.classList.add('visible');
+
+    const tooltipWidth = globalTooltipEl.offsetWidth;
+    const tooltipHeight = globalTooltipEl.offsetHeight;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const gap = 8; // Margin between icon and tooltip
+    const screenMargin = 12; // Minimum gap from viewport edges
+
+    // 1. VERTICAL POSITIONING (TOP vs BOTTOM)
+    // Default to TOP position
+    let placement = 'top';
+    let top = rect.top - tooltipHeight - gap;
+
+    // Check if placing above would bleed past top edge of screen
+    if (top < screenMargin) {
+      // Flip to place below icon
+      placement = 'bottom';
+      top = rect.bottom + gap;
+
+      // If placing below also bleeds past bottom of screen, clamp top
+      if (top + tooltipHeight > viewportHeight - screenMargin) {
+        top = viewportHeight - tooltipHeight - screenMargin;
+      }
+    }
+
+    // Double check top clamping if screen height is very small
+    if (top < screenMargin) {
+      top = screenMargin;
+    }
+
+    // 2. HORIZONTAL POSITIONING (CENTERED over icon, clamped inside screen margins)
+    let left = triggerCenterX - tooltipWidth / 2;
+
+    if (left < screenMargin) {
+      left = screenMargin;
+    } else if (left + tooltipWidth > viewportWidth - screenMargin) {
+      left = viewportWidth - tooltipWidth - screenMargin;
+    }
+
+    // 3. ARROW POSITIONING (Points directly to icon center)
+    let arrowX = triggerCenterX - left;
+    // Clamp arrow position inside rounded box bounds (14px from left/right edges)
+    arrowX = Math.max(14, Math.min(arrowX, tooltipWidth - 14));
+
+    // Apply computed fixed positions
+    globalTooltipEl.style.left = `${Math.round(left)}px`;
+    globalTooltipEl.style.top = `${Math.round(top)}px`;
+
+    globalTooltipEl.classList.remove('placement-top', 'placement-bottom');
+    globalTooltipEl.classList.add(`placement-${placement}`);
+
+    arrowEl.style.left = `${Math.round(arrowX - 6)}px`;
+  }
+
+  function hideFloatingTooltip() {
+    if (!globalTooltipEl) return;
+    globalTooltipEl.classList.remove('visible');
+    activeTooltipContainer = null;
+  }
+
+  // Delegated Event Listeners for Tooltips
+  document.addEventListener('mouseover', (e) => {
+    const container = e.target.closest('.info-tooltip-container');
+    if (container) {
+      activeTooltipContainer = container;
+      positionFloatingTooltip(container);
+    }
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    const container = e.target.closest('.info-tooltip-container');
+    if (container && activeTooltipContainer === container) {
+      hideFloatingTooltip();
+    }
+  });
+
+  document.addEventListener('focusin', (e) => {
+    const container = e.target.closest('.info-tooltip-container');
+    if (container) {
+      activeTooltipContainer = container;
+      positionFloatingTooltip(container);
+    }
+  });
+
+  document.addEventListener('focusout', (e) => {
+    const container = e.target.closest('.info-tooltip-container');
+    if (container && activeTooltipContainer === container) {
+      hideFloatingTooltip();
+    }
+  });
+
+  window.addEventListener('scroll', () => {
+    if (activeTooltipContainer) {
+      positionFloatingTooltip(activeTooltipContainer);
+    }
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    if (activeTooltipContainer) {
+      positionFloatingTooltip(activeTooltipContainer);
+    }
+  }, { passive: true });
 });

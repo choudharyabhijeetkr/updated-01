@@ -178,7 +178,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: visible;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
@@ -189,6 +189,8 @@ body {
   padding: 12px 18px;
   border-bottom: 1px solid var(--border);
   background: #ffffff;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
 }
 
 .card-header h2 {
@@ -390,7 +392,6 @@ body {
 /* ─── Detailed Explanation Tooltips ─── */
 
 .info-tooltip-container {
-  position: relative;
   display: inline-flex;
   align-items: center;
   margin-left: 4px;
@@ -410,11 +411,22 @@ body {
   transform: scale(1.15);
 }
 
+/* Hide inline template source tooltips so JS handles rendering via body portal */
 .tooltip-popup {
-  visibility: hidden;
+  display: none !important;
+}
+
+/* ─── Global Floating Tooltip Portal (Direct Child of <body>) ─── */
+.global-floating-tooltip {
+  position: fixed !important;
+  z-index: 9999999 !important;
+  pointer-events: none;
+  top: -9999px;
+  left: -9999px;
   opacity: 0;
-  width: 260px;
-  max-width: min(260px, 82vw);
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
   background-color: #0f172a;
   color: #f8fafc;
   font-size: 11px;
@@ -423,38 +435,38 @@ body {
   text-transform: none;
   border-radius: 8px;
   padding: 10px 14px;
-  position: absolute;
-  z-index: 1000;
-  bottom: 125%;
-  right: -10px;
-  left: auto;
-  transform: translateY(4px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4), 0 8px 10px -6px rgba(15, 23, 42, 0.3);
-  pointer-events: none;
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.55), 0 8px 12px -6px rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  width: 280px;
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-.tooltip-popup strong {
+.global-floating-tooltip.screenshot-tooltip-mode {
+  width: 300px;
+}
+
+.global-floating-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.global-floating-tooltip strong {
   color: #38bdf8;
   font-weight: 600;
 }
 
-.tooltip-popup.screenshot-tooltip {
-  width: 290px;
-  max-width: min(290px, 85vw);
-  right: -10px;
-  left: auto;
-}
-
-.tooltip-subheading {
+.global-floating-tooltip .tooltip-subheading {
   color: #38bdf8;
   display: block;
   margin-bottom: 4px;
+  font-weight: 600;
 }
 
-.tooltip-code {
+.global-floating-tooltip .tooltip-code {
   display: block;
   background: #1e293b;
   color: #38bdf8;
@@ -468,7 +480,7 @@ body {
   margin-top: 2px;
 }
 
-.tooltip-text-block {
+.global-floating-tooltip .tooltip-text-block {
   display: block;
   margin-top: 6px;
   font-size: 10.5px;
@@ -476,44 +488,49 @@ body {
   line-height: 1.4;
 }
 
-.tooltip-divider {
+.global-floating-tooltip .tooltip-divider {
   border: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   margin: 8px 0;
 }
 
-.tooltip-mode-status {
+.global-floating-tooltip .tooltip-mode-status {
   font-size: 10.5px;
   line-height: 1.5;
 }
 
-.tooltip-mode-status .mode-off {
+.global-floating-tooltip .tooltip-mode-status .mode-off {
   color: #f87171;
   font-weight: 600;
 }
 
-.tooltip-mode-status .mode-on {
+.global-floating-tooltip .tooltip-mode-status .mode-on {
   color: #4ade80;
   font-weight: 600;
 }
 
-.tooltip-popup::after {
-  content: "";
+/* Floating Arrow Indicator */
+.global-floating-tooltip .tooltip-arrow {
   position: absolute;
-  top: 100%;
-  right: 14px;
-  left: auto;
-  border-width: 5px;
+  width: 0;
+  height: 0;
   border-style: solid;
+  pointer-events: none;
+}
+
+.global-floating-tooltip.placement-top .tooltip-arrow {
+  bottom: -6px;
+  border-width: 6px 6px 0 6px;
   border-color: #0f172a transparent transparent transparent;
 }
 
-.info-tooltip-container:hover .tooltip-popup,
-.info-tooltip-container:focus .tooltip-popup {
-  visibility: visible;
-  opacity: 1;
-  transform: translateY(0);
+.global-floating-tooltip.placement-bottom .tooltip-arrow {
+  top: -6px;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent #0f172a transparent;
 }
+
+
 
 .input-card {
   background: var(--bg-secondary);

@@ -34,7 +34,7 @@ app.get('*', (req, res, next) => {
 
 // Re-sync HTML report file on boot from existing store data
 try {
-  updateReportDisk();
+  updateReportDisk({ immediate: true });
 } catch (err) {
   console.error('[server] Initial report sync failed:', err.message);
 }

@@ -17,6 +17,23 @@ const REPORT_PATH = path.join(process.cwd(), 'reports', 'execution-report.html')
 let reportTimer = null;
 let isWritingReport = false;
 
+function writeReportHtmlNowSync() {
+  if (reportTimer) {
+    clearTimeout(reportTimer);
+    reportTimer = null;
+  }
+  try {
+    const data = store.getAllData();
+    const html = generateReportHtml(data);
+    const dir = path.dirname(REPORT_PATH);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(REPORT_PATH, html, 'utf8');
+  } catch (err) {
+    console.error('[htmlReportGenerator] Sync report write error:', err.message);
+  }
+  return REPORT_PATH;
+}
+
 async function writeReportHtmlNow() {
   if (reportTimer) {
     clearTimeout(reportTimer);
@@ -42,8 +59,7 @@ async function writeReportHtmlNow() {
 function updateReportDisk(options = {}) {
   const immediate = typeof options === 'boolean' ? options : !!options.immediate;
   if (immediate) {
-    writeReportHtmlNow();
-    return REPORT_PATH;
+    return writeReportHtmlNowSync();
   }
 
   if (!reportTimer) {
@@ -475,24 +491,49 @@ function generateReportHtml(data) {
 
     (function() {
       try {
-        const raw = document.getElementById('__REPORT_DATA__').textContent;
+        const rawEl = document.getElementById('__REPORT_DATA__');
+        if (!rawEl) {
+          const app = document.getElementById('app');
+          if (app) app.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Report data element missing.</div>';
+          return;
+        }
+        const raw = rawEl.textContent || '{}';
         const data = JSON.parse(raw);
         const app = document.getElementById('app');
+        if (!app) return;
 
-        let rawSessions = data.sessions || [];
-        let executionsById = data.executionsById || {};
-        let settings = data.settings || { excludeStoppedSessions: false, hideIncompleteTests: false };
+        let rawSessions = (data && data.sessions) ? data.sessions : [];
+        let executionsById = (data && data.executionsById) ? data.executionsById : {};
+        let settings = (data && data.settings) ? data.settings : { excludeStoppedSessions: false, hideIncompleteTests: false };
 
         // Filter sessions if excludeStoppedSessions setting is enabled
         let sessions = rawSessions.filter(s => {
+          if (!s) return false;
           if (settings.excludeStoppedSessions && (s.status === 'STOPPED' || s.status === 'CANCELLED')) {
             return false;
           }
           return true;
         });
 
+        if (sessions.length === 0) {
+          app.innerHTML = '<div style="text-align: center; padding: 48px 24px; color: var(--text-secondary); background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); max-width: 640px; margin: 30px auto; box-shadow: var(--shadow);">' +
+            '<div style="width: 56px; height: 56px; border-radius: 50%; background: var(--accent-light); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 16px;">' +
+              '<i class="fas fa-file-alt"></i>' +
+            '</div>' +
+            '<h3 style="font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">No Execution Reports Available</h3>' +
+            '<p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">' +
+              'No test execution history found. Select test scripts on the main dashboard and click <strong>Run Selected</strong> or <strong>Run All</strong> to execute automated test suites and generate reports.' +
+            '</p>' +
+            '<div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text-muted);">' +
+              '<i class="fas fa-info-circle" style="color: var(--accent);"></i> Reports update automatically after every execution run' +
+            '</div>' +
+          '</div>';
+          return;
+        }
+
         // Helper to format date key YYYY-MM-DD
         function formatDateKey(d) {
+          if (!d) return 'Unknown Date';
           const dt = new Date(d);
           if (isNaN(dt.getTime())) return 'Unknown Date';
           const yyyy = dt.getFullYear();
@@ -503,6 +544,7 @@ function generateReportHtml(data) {
 
         // Helper to format human friendly date label
         function formatDateLabel(dateKey) {
+          if (!dateKey) return 'Unknown';
           if (dateKey === 'ALL') return 'All Dates';
           const now = new Date();
           const todayKey = formatDateKey(now);
@@ -511,16 +553,18 @@ function generateReportHtml(data) {
           yesterday.setDate(now.getDate() - 1);
           const yesterdayKey = formatDateKey(yesterday);
 
-          const parts = dateKey.split('-');
+          const parts = String(dateKey).split('-');
           if (parts.length === 3) {
-            const dt = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            const monthStr = dt.toLocaleString('en-US', { month: 'short' });
-            const dayNum = dt.getDate();
-            const yearNum = dt.getFullYear();
+            const dt = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            if (!isNaN(dt.getTime())) {
+              const monthStr = dt.toLocaleString('en-US', { month: 'short' });
+              const dayNum = dt.getDate();
+              const yearNum = dt.getFullYear();
 
-            if (dateKey === todayKey) return 'Today (' + monthStr + ' ' + dayNum + ')';
-            if (dateKey === yesterdayKey) return 'Yesterday (' + monthStr + ' ' + dayNum + ')';
-            return monthStr + ' ' + dayNum + ', ' + yearNum;
+              if (dateKey === todayKey) return 'Today (' + monthStr + ' ' + dayNum + ')';
+              if (dateKey === yesterdayKey) return 'Yesterday (' + monthStr + ' ' + dayNum + ')';
+              return monthStr + ' ' + dayNum + ', ' + yearNum;
+            }
           }
           return dateKey;
         }
@@ -565,17 +609,14 @@ function generateReportHtml(data) {
         let cardsHtml = '<div id="sessionCardsContainer">';
         const sortedSessions = [...sessions].reverse();
 
-        if (sortedSessions.length === 0) {
-          cardsHtml += '<div style="text-align: center; padding: 40px 20px; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius);"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px; color: var(--accent);"></i><p style="font-size: 14px; font-weight: 600;">No execution sessions recorded yet.</p><p style="font-size: 12px; margin-top: 4px;">Run test executions from the dashboard to populate the report.</p></div>';
-        } else {
-          for (const session of sortedSessions) {
-            const sessionDateKey = formatDateKey(session.createdAt);
-            const execIds = session.executionIds || [];
-            let execs = execIds.map(id => executionsById[id]).filter(Boolean);
+        for (const session of sortedSessions) {
+          const sessionDateKey = formatDateKey(session.createdAt);
+          const execIds = session.executionIds || [];
+          let execs = execIds.map(id => executionsById[id]).filter(Boolean);
 
-            if (settings.hideIncompleteTests) {
-              execs = execs.filter(exec => exec.status === 'PASS' || exec.status === 'FAIL');
-            }
+          if (settings.hideIncompleteTests) {
+            execs = execs.filter(exec => exec && (exec.status === 'PASS' || exec.status === 'FAIL' || exec.status === 'RETRY_PASS'));
+          }
 
             cardsHtml += '<div class="session-card" data-session-date="' + sessionDateKey + '">' +
               '<div class="session-header">' +
@@ -751,6 +792,10 @@ function generateReportHtml(data) {
 
       } catch (err) {
         console.error('Failed to render report:', err);
+        const app = document.getElementById('app');
+        if (app) {
+          app.innerHTML = '<div style="text-align: center; padding: 40px 20px; color: var(--danger); background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); max-width: 600px; margin: 20px auto;"><i class="fas fa-exclamation-triangle" style="font-size: 32px; margin-bottom: 12px;"></i><h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">Unable to Render Report</h4><p style="font-size: 13px; color: var(--text-muted);">' + escapeHtml(err.message) + '</p></div>';
+        }
       }
     })();
   </script>

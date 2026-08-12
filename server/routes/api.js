@@ -271,7 +271,7 @@ router.post('/settings', (req, res) => {
       ...(typeof enableScreenshotCapture === 'boolean' ? { enableScreenshotCapture } : {}),
     });
     const { updateReportDisk } = require('../services/htmlReportGenerator');
-    updateReportDisk();
+    updateReportDisk({ immediate: true });
     res.json({ success: true, settings: updated });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -283,7 +283,7 @@ router.post('/reset', (req, res) => {
   try {
     store.clear();
     const { updateReportDisk } = require('../services/htmlReportGenerator');
-    updateReportDisk();
+    updateReportDisk({ immediate: true });
     res.json({ success: true, message: 'All report data and execution sessions reset.' });
   } catch (err) {
     res.status(500).json({ error: err.message });

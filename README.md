@@ -1,167 +1,177 @@
-# Visa Test Automation Dashboard
+# Playwright Test Automation Dashboard
 
-A production-grade, end-to-end automated testing platform and web dashboard for validating complex online visa application workflows across multiple browser engines and device viewports. Built with **Playwright**, **TypeScript**, **Express.js**, and **ExcelJS**.
+A production-grade, end-to-end automated testing platform and web dashboard for executing, monitoring, and reporting web test automation workflows across multiple browser engines and device viewports. Built with **Playwright**, **TypeScript**, **Express.js**, and **ExcelJS**.
 
 ---
 
 ## Table of Contents
 
 - [Project Overview](#project-overview)
-  - [Purpose](#purpose)
+  - [Purpose & Scope](#purpose--scope)
   - [Complete Workflow](#complete-workflow)
-  - [Overall Architecture](#overall-architecture)
-- [Features](#features)
+  - [System Architecture](#system-architecture)
+- [Key Features](#key-features)
+- [Cross-Platform & Hardware Management](#cross-platform--hardware-management)
 - [Project Structure](#project-structure)
 - [System Requirements](#system-requirements)
-- [Installation](#installation)
-- [Dependencies](#dependencies)
+- [Installation & Setup](#installation--setup)
+- [Environment Variable Configuration](#environment-variable-configuration)
 - [Available Commands](#available-commands)
-- [Configuration](#configuration)
-  - [Web Dashboard Settings](#web-dashboard-settings)
-  - [Playwright Test Configuration](#playwright-test-configuration)
-  - [Environment Variables](#environment-variables)
-- [How to Use](#how-to-use)
-- [Execution Logic](#execution-logic)
-- [Run Progress](#run-progress)
-- [HTML Report](#html-report)
-- [Excel Report](#excel-report)
-- [Reports Folder](#reports-folder)
-- [Adding a New Test](#adding-a-new-test)
+- [Web Dashboard Overview](#web-dashboard-overview)
+- [Reporting System](#reporting-system)
+  - [Interactive HTML Report](#interactive-html-report)
+  - [Excel Report](#excel-report)
+  - [Shared Screenshots Directory](#shared-screenshots-directory)
+- [Adding & Writing Custom Tests](#adding--writing-custom-tests)
 - [Troubleshooting](#troubleshooting)
 - [Best Practices](#best-practices)
 - [Technologies Used](#technologies-used)
-- [FAQ](#faq)
 - [License](#license)
-- [Author](#author)
 
 ---
 
 ## Project Overview
 
-### Purpose
+### Purpose & Scope
 
-The **Visa Test Automation Dashboard** provides an automated framework designed to execute, monitor, and report end-to-end web test automation scripts for online visa processing portals (such as Bahrain eVisa, Azerbaijan eVisa, etc.). 
+The **Playwright Test Automation Dashboard** is a generic, framework-agnostic test execution engine and reporting dashboard. It allows teams to manage, trigger, monitor, and audit end-to-end automated web test suites (such as application forms, portal workflows, SaaS platforms, e-commerce checkout flows, and API integrations) through a responsive web interface or CLI.
 
-Applying for eVisas involves filling multi-step web forms, handling dynamic CAPTCHAs, uploading identity documents (passports, flight itineraries, hotel bookings, proof of funds), and reaching payment gateways. This platform automates these multi-device workflows and provides real-time progress monitoring alongside comprehensive **Excel** and **offline HTML** reporting.
+The platform abstracts Playwright complexity by providing real-time Server-Sent Events (SSE) progress tracking, automated hardware concurrency safety guards, configurable retry policies, and self-contained **HTML** and **Excel** report generation.
 
 ### Complete Workflow
 
-```
+```text
  ┌─────────────────────────────────────────────────────────────────────────────────┐
  │                               1. WEB DASHBOARD                                  │
- │   User selects test scripts, browsers, devices, retries, and execution mode.    │
+ │   User selects test scripts, browser engines, platforms, and retry limits.     │
  └──────────────────────────────────────┬──────────────────────────────────────────┘
                                         │
                                         ▼
  ┌─────────────────────────────────────────────────────────────────────────────────┐
  │                           2. EXPRESS BACKEND ROUTER                             │
- │   POST /api/run creates a session ID (runId) & total target calculations.        │
+ │   POST /api/run initializes execution session (runId) & target matrix calculation│
  └──────────────────────────────────────┬──────────────────────────────────────────┘
                                         │
                                         ▼
  ┌─────────────────────────────────────────────────────────────────────────────────┐
- │                           3. DYNAMIC CONFIG ENGINE                              │
- │   Generates .temp-run-config.mjs targeting selected (Tests × Browsers × Devices)  │
+ │                        3. HARDWARE & CONFIG ENGINE                              │
+ │   Memory Guard checks system RAM/CPU; generates temporary Playwright .mjs config│
  └──────────────────────────────────────┬──────────────────────────────────────────┘
                                         │
                                         ▼
  ┌─────────────────────────────────────────────────────────────────────────────────┐
  │                          4. PLAYWRIGHT RUNNER & SSE                             │
- │   Spawns `npx playwright test`. Streams live status updates over SSE.            │
- │   Custom baseTest captures step logs, failure screenshots, and payment URLs.    │
+ │   Spawns `npx playwright test`. Streams live updates over Server-Sent Events.  │
+ │   Custom baseTest fixture captures execution logs, screenshots, and URLs.      │
  └──────────────────────────────────────┬──────────────────────────────────────────┘
                                         │
                                         ▼
  ┌─────────────────────────────────────────────────────────────────────────────────┐
  │                           5. REPORT GENERATION                                  │
- │   • report.xlsx: Embeds full screenshot images directly into Excel cells        │
- │   • report.html: Offline web document with date tabs, history, and base64 images│
+ │   • execution-report.html: Offline web report with date tabs & error modals   │
+ │   • test-reports.xlsx: Formatted Excel spreadsheet with screenshot hyperlinks   │
  └──────────────────────────────────────┬──────────────────────────────────────────┘
                                         │
                                         ▼
  ┌─────────────────────────────────────────────────────────────────────────────────┐
  │                           6. UI SYNCHRONIZATION                                 │
- │   Dashboard updates progress bar to 100%, updates completed session counts,      │
- │   and renders interactive HTML report inside an embedded frame.                 │
+ │   Dashboard updates progress meters, displays status badges, and renders        │
+ │   interactive report iframe upon completion.                                    │
  └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Overall Architecture
+### System Architecture
 
-The application is structured into four primary layers:
+The application is structured into four main layers:
 
-1. **Frontend Web Dashboard (`/web`)**: A responsive, vanilla JavaScript SPA (Single Page Application) with real-time SSE event listeners, dynamic search, selection metrics, and embedded iframe report viewing.
-2. **Backend Express Server (`/server`)**: Node.js web server exposing REST endpoints, Server-Sent Events (SSE) streaming connections, and system file system triggers.
-3. **Execution Engine (`/server/services`)**: Spawns Playwright processes with dynamically written configuration files, parses CLI stdout/stderr line-by-line, and manages execution session state.
-4. **Test Fixtures & Utilities (`/utils` & `/tests`)**: Extended Playwright test runners (`baseTest.ts`) with automatic screenshot capture on failure, CAPTCHA solver utilities, and multi-file document upload handlers.
+1. **Frontend Web Dashboard (`/web`)**: A responsive single-page web app built with vanilla JavaScript, CSS3 flex/grid, and FontAwesome. Features live SSE event streams, dynamic search and filtering, test selection metrics, system health diagnostics, and embedded report viewing.
+2. **Backend Express Server (`/server`)**: Node.js web server handling REST endpoints, static file routing, SSE broadcast connections, and system health checks.
+3. **Execution Engine (`/server/services`)**: Manages process spawning, stdout/stderr parsing, queue execution, memory safety throttling, and dynamic Playwright configuration generation.
+4. **Test Utilities & Specs (`/utils` & `/tests`)**: Shared Playwright test extension fixtures (`baseTest.ts`), step-by-step screenshot utilities, device viewports, and custom spec suites.
 
 ---
 
-## Features
+## Key Features
 
-- **End-to-End Playwright Automation**: Full cross-browser automation capable of handling complex forms, input masks, dropdowns, and file uploads.
-- **Multi-Browser Support**: Configurable execution across **Chrome**, **Firefox**, **Safari (WebKit)**, and **Edge** browser engines.
-- **Multi-Device Simulation**: Pre-configured support for **Desktop (1920x1080)**, **Android (Pixel 5)**, and **iPhone 14** viewports.
-- **Session-Based Execution Architecture**: Grouping execution by session (`runId`) where one run command triggers a single consolidated batch.
-- **Run Selected & Run All Modes**: Flexibility to target specific spec files or run the entire test suite simultaneously.
-- **Live SSE Progress Tracking**: Real-time progress updates sent directly from the test runner to the dashboard over Server-Sent Events (SSE).
-- **Single Source of Truth UI**: Synchronized execution lifecycle (`Pending` $\rightarrow$ `Running` $\rightarrow$ `PASS` / `FAIL` / `SKIPPED`) guaranteeing no item remains pending post-run.
-- **Configurable Retries & Headless Mode**: Toggle between Headless and Headed browser execution with custom retry limits (0 to 5).
-- **Automated Failure Screenshots**: Captures full-page screenshots automatically upon test failure or step timeouts.
-- **Payment URL Auto-Extraction**: Captures payment gateway URLs automatically when tests reach final confirmation steps.
-- **Native Excel Reporting (`reports/report.xlsx`)**: Generates formatted Excel spreadsheets with **cell-embedded screenshot images**, color-coded statuses, summary metrics, and frozen headers using `ExcelJS`.
-- **Self-Contained Offline HTML Report (`reports/report.html`)**: Complete standalone HTML report with date-wise tab navigation, historical run logging (`report-history.json`), search, status filters, and embedded Base64 image viewports.
-- **CAPTCHA & Document Upload Helper**: Custom solvers for triple-Base64 encoded CAPTCHA endpoints and file upload validation.
-- **Folder & Download Integration**: Direct buttons to download reports or open local report folders on the server host machine.
+- **Generic & Extensible Framework**: Automates any web portal, web app, or multi-step form workflow.
+- **Cross-Browser Support**: Concurrent or targeted execution across **Chromium** (Chrome/Edge), **Firefox**, and **WebKit** (Safari) browser engines.
+- **Multi-Platform Viewports**: Pre-configured support for **Desktop (1920x1080)**, **Android (Pixel 5)**, and **iOS (iPhone 14)** viewports.
+- **Dynamic Test Discovery**: Automatically scans and lists all test specifications in the directory defined by `TEST_DIR`.
+- **Live SSE Progress Tracking**: Real-time test state updates (`PENDING` $\rightarrow$ `RUNNING` $\rightarrow$ `PASS` / `FAIL` / `RETRY_PASS` / `STOPPED`) pushed directly to the UI over Server-Sent Events.
+- **Hardware Concurrency Safety Guard**: Auto-detects system CPU cores and available RAM to calculate optimal worker batching and throttle execution under memory pressure.
+- **Configurable Retries & Headless Execution**: Toggle headless/headed browser windows and set retry limits (0 to 10 attempts) per test.
+- **Report Preferences**: Toggle settings to exclude stopped runs, hide incomplete tests, and control explicit screenshot capture.
+- **Interactive Offline HTML Reporting (`reports/execution-report.html`)**: Self-contained HTML report with date-wise tab navigation, date search picker, session accordions, status filters, screenshot links, and full stack trace modal viewers.
+- **Formatted Excel Reporting (`reports/test-reports.xlsx`)**: Auto-maintained Excel workbook with separate date sheets (`YYYY-MM-DD`), color-coded status cells, and screenshot hyperlinks.
+- **Shared Screenshots Artifacts (`/screenshots`)**: Single unified screenshot directory preventing file duplication across report formats.
+- **System Health Diagnostics**: Real-time modal checking backend API reachability, Playwright installation, browser binary availability, and available system RAM/vCPU metrics.
+
+---
+
+## Cross-Platform & Hardware Management
+
+The framework is engineered for full cross-platform compatibility across **Linux**, **macOS**, and **Windows** operating systems.
+
+### OS Platform Detection & Browser Paths
+- **Executable Path Verification**: The server checks browser binary installations directly on startup without launching full browser processes.
+- **Linux Dependency Awareness**: Automatically detects Linux environments and reports host shared library prerequisites.
+
+### Memory Safety Guard & Auto-Batching
+Playwright test workers can consume significant memory when running multiple browser contexts in parallel. The built-in Memory Safety Guard prevents system freezes and crashes:
+- **Auto-Calculated Batch Concurrency**: Inspects available vCPUs and total/free system RAM to set safe default parallel worker limits.
+- **Dynamic Memory Throttling**: If free RAM drops below 600 MB, the engine automatically throttles execution batch size down to safe limits and alerts the user in the UI.
 
 ---
 
 ## Project Structure
 
 ```text
-visa-test-automation/
-├── .env.example                   # Template for environment variables
-├── .gitignore                     # Git ignore file configuration
-├── metadata.json                  # Application metadata and runtime settings
-├── package.json                   # Project manifest, scripts, and dependencies
+playwright-test-automation/
+├── .env.example                   # Template for environment configuration
+├── .gitignore                     # Git ignore rules for reports, node_modules, etc.
+├── metadata.json                  # Application metadata and capabilities
+├── package.json                   # Project dependencies and run scripts
 ├── playwright.config.ts           # Fallback static Playwright configuration
 ├── tsconfig.json                  # TypeScript compiler settings
-├── README.md                      # Project documentation
+├── README.md                      # Comprehensive project documentation
 │
 ├── server/                        # Backend Express Application
-│   ├── index.js                   # Server entry point & static file routing
+│   ├── index.js                   # Express server entry point & static routes
 │   ├── routes/
-│   │   └── api.js                 # REST endpoints and SSE stream controllers
+│   │   └── api.js                 # REST endpoints, SSE streams & health checks
 │   └── services/
-│       ├── configGenerator.js     # Dynamic Playwright .mjs config generator
-│       ├── testRunner.js          # Child process spawner & stdout stream parser
-│       ├── reportGenerator.js     # Excel report (.xlsx) generator with cell images
-│       └── htmlReportGenerator.js # Offline HTML report (.html) & history manager
+│       ├── configGenerator.js     # Dynamic Playwright .mjs config writer
+│       ├── executionQueue.js      # Session queue & memory guard orchestrator
+│       ├── sessionStore.js        # Single source of truth session database
+│       ├── testRunner.js          # Child process spawner & stdout parser
+│       ├── excelReportGenerator.js # Excel report (.xlsx) generator
+│       └── htmlReportGenerator.js # Standalone HTML report (.html) generator
 │
-├── tests/                         # E2E Automated Test Suites
-│   ├── assets/
-│   │   └── 10kb.jpg               # Sample test upload asset
-│   └── spec/
-│       ├── azerbaijan-visa.spec.ts# Azerbaijan eVisa application test script
-│       └── bahrain-visa.spec.ts   # Bahrain eVisa application test script
+├── tests/                         # Test Suites & Assets
+│   ├── assets/                    # Sample upload assets and test files
+│   └── spec/                      # E2E Playwright test specifications (*.spec.ts)
+│       ├── azerbaijan-visa.spec.ts
+│       ├── bahrain-visa.spec.ts
+│       └── ...
 │
 ├── utils/                         # Shared Test Utilities & Fixtures
-│   ├── baseTest.ts                # Extended Playwright test fixture & screenshot hooks
-│   ├── devices.ts                 # Browser and device viewport dictionary
-│   ├── upload.ts                  # Document upload waiter and validator
-│   └── captcha/
-│       └── captchaHelper.ts       # CAPTCHA interceptor & Base64 decoder
+│   ├── baseTest.ts                # Extended Playwright test fixture & lifecycle hooks
+│   ├── devices.ts                 # Viewport and device emulation profiles
+│   ├── screenshot.ts             # Custom screenshot capture utility
+│   ├── upload.ts                  # Document upload and file verification helpers
+│   └── captcha/                   # Optional CAPTCHA handling utilities
+│       └── captchaHelper.ts
 │
 ├── web/                           # Frontend Dashboard SPA
-│   ├── index.html                 # Main dashboard UI structure
-│   ├── style.css                  # Custom styling and responsive design
-│   └── app.js                     # Dashboard state management & SSE event handlers
+│   ├── index.html                 # Main dashboard UI HTML
+│   ├── style.css                  # Modern responsive design stylesheet
+│   └── app.js                     # Dashboard state, SSE listener & UI controller
 │
-└── reports/                       # Generated Output Artifacts (Auto-created)
-    ├── report.xlsx                # Latest generated Excel report
-    ├── report.html                # Interactive offline HTML report
-    ├── report-history.json        # Persistent JSON history database
-    └── screenshots/               # Failure screenshot image directory
+├── reports/                       # Generated Output Artifacts (Auto-created)
+│   ├── execution-report.html      # Latest interactive HTML report
+│   └── test-reports.xlsx          # Auto-updated Excel report workbook
+│
+└── screenshots/                   # Shared Screenshot Artifacts Directory
 ```
 
 ---
@@ -173,61 +183,45 @@ visa-test-automation/
 | **Operating System** | Windows 10/11, macOS 12+, Linux (Ubuntu 20.04 LTS or newer) |
 | **Node.js** | `>= 18.0.0` (Recommended: `Node.js 20.x LTS`) |
 | **npm** | `>= 9.0.0` |
-| **Playwright** | `^1.41.0` (Chromium binary required) |
-| **RAM** | Minimum: 4 GB \| Recommended: 8 GB+ for multi-worker parallel runs |
-| **Disk Space** | ~1 GB (for Node dependencies, Playwright browser binaries, and screenshots) |
-| **Network** | Active Internet connection required for live website interaction |
+| **Playwright** | `^1.41.0` |
+| **RAM** | Minimum: 4 GB \| Recommended: 8 GB+ for parallel multi-browser runs |
+| **Disk Space** | ~1 GB (for Node packages, Playwright browser binaries, and screenshots) |
 | **IDE** | VS Code (Recommended extension: *Playwright Test for VSCode*) |
 
 ---
 
-## Installation
+## Installation & Setup
 
-Follow these steps to set up the project on your local machine or server:
+Follow these steps to set up the project environment:
 
-### Step 1: Clone the Repository
-
-```bash
-git clone https://github.com/your-username/visa-test-automation.git
-cd visa-test-automation
-```
-
-### Step 2: Ensure Node.js & npm are Installed
-
-Verify your Node.js version:
+### Step 1: Clone or Open the Workspace
 
 ```bash
-node -v
-npm -v
+git clone <repository-url>
+cd playwright-test-automation
 ```
 
-> **Note:** If Node.js is missing, download it from [nodejs.org](https://nodejs.org/).
-
-### Step 3: Install npm Dependencies
-
-Install all required runtime and development dependencies:
+### Step 2: Install Node.js Dependencies
 
 ```bash
 npm install
 ```
 
-### Step 4: Install Playwright Browsers
+### Step 3: Install Playwright Browsers
 
-Download the browser binaries (Chromium, Firefox, WebKit) required by Playwright:
+Download the required browser binaries (Chromium, Firefox, WebKit):
 
 ```bash
+# Install Chromium only
 npx playwright install chromium
-```
 
-To install all supported browsers:
-
-```bash
+# Or install all supported engines
 npx playwright install
 ```
 
-### Step 5: Environment Setup
+### Step 4: Configure Environment Variables
 
-Copy `.env.example` to create `.env` (optional, default port is `3000`):
+Create a `.env` file based on `.env.example`:
 
 ```bash
 cp .env.example .env
@@ -235,26 +229,40 @@ cp .env.example .env
 
 ---
 
-## Dependencies
+## Environment Variable Configuration
 
-The project uses the following dependencies specified in `package.json`:
+All primary framework settings are driven by environment variables defined in `.env`:
 
-| Package | Version | Type | Purpose |
-| :--- | :--- | :--- | :--- |
-| `express` | `^4.18.2` | Runtime | Web framework serving REST APIs, static files, and SSE streams |
-| `exceljs` | `^4.4.0` | Runtime | Generates Excel files (`.xlsx`) with native cell image embedding |
-| `glob` | `^10.3.10` | Runtime | File and directory pattern matching utility |
-| `open` | `^10.0.3` | Runtime | Opens files and folders in the OS file explorer |
-| `os` | `^0.1.2` | Runtime | Provides system CPU and platform architecture information |
-| `uuid` | `^9.0.0` | Runtime | Generates unique session IDs (`runId`) for execution tracking |
-| `@playwright/test` | `^1.41.0` | Dev | End-to-end browser automation framework and test runner |
-| `typescript` | `^5.3.3` | Dev | TypeScript language compiler and type checker |
+```env
+# APP_TITLE: Custom branding title displayed on the dashboard UI and generated reports
+# Default: "Playwright Test Automation"
+APP_TITLE=Playwright Test Automation
+
+# TEST_DIR: Relative path from project root to test specification directory
+# Default: "./tests/spec"
+TEST_DIR=./tests/spec
+
+# PORT: Server port for the Express backend and web dashboard
+# Default: 3000
+PORT=3000
+
+# CI: Set to true in continuous integration environments
+# Default: false
+CI=false
+```
+
+### Explaining `APP_TITLE` & `TEST_DIR`
+
+- **`APP_TITLE`**: Customizes application branding across the dashboard header, system health diagnostics modal, document title, and report metadata.
+  - *Example*: `APP_TITLE="E2E Checkout Automation Suite"`
+- **`TEST_DIR`**: Directs the test engine to scan a specific folder for test specification files (`*.spec.ts` or `*.spec.js`).
+  - *Example*: `TEST_DIR="./tests/e2e/regression"`
 
 ---
 
 ## Available Commands
 
-Run these scripts from the project root using `npm`:
+Execute these commands from the project root:
 
 ```bash
 # Start the Web Dashboard and Express Server
@@ -266,271 +274,144 @@ npm run dev
 # Explicitly start the server
 npm run server
 
+# Type-check TypeScript files without emitting code
+npm run lint
+
 # Compile TypeScript files
 npm run build
 
-# Type check codebase without emitting output
-npm run lint
-
-# Execute Playwright tests directly from CLI in headless mode
+# Run Playwright tests directly from CLI in headless mode
 npm run test:dev
 
-# Execute Playwright tests directly from CLI in headed mode
+# Run Playwright tests directly from CLI in headed mode
 npm run test:headed
 ```
 
 ---
 
-## Configuration
+## Web Dashboard Overview
 
-### Web Dashboard Settings
+Launch the dashboard by starting the server (`npm start`) and opening `http://localhost:3000` in your web browser.
 
-The web interface allows runtime configuration before triggering execution:
+### Configuration Controls
+- **Browser Engines**: Checkbox selection for Chromium, Firefox, and WebKit.
+- **Platforms**: Checkbox selection for Desktop, Android, and iOS viewports.
+- **Headless Mode**: Toggle invisible background execution or visible browser windows.
+- **Batch Concurrency**: Auto-calculated based on system hardware, manually adjustable from 1 to 10 workers.
+- **Max Retries**: Set auto-retry attempts (0 to 10) on step failure.
+- **Report Preferences**: Toggles to exclude stopped runs, hide incomplete tests, and enable explicit screenshot capture.
 
-- **Browser Selection**: Toggle Chrome, Firefox, Safari, and Edge.
-- **Device Selection**: Toggle Desktop (1920x1080), iPhone 14, and Android.
-- **Headless Mode**: Checkbox to toggle between invisible background execution (`true`) and visible browser windows (`false`).
-- **Retries**: Set max retry count per test on failure (Default: `3`).
+### Test Suites & Scripts Panel
+- **Real-Time Search**: Filter test scripts by name, domain keyword, or filename.
+- **Selection Actions**: Click individual test tiles, or use **Select All** / **Clear** controls.
+- **Execution Summary Bar**: Dynamically calculates target executions:
+  $$\text{Execution Target} = \text{Tests} \times \text{Engines} \times \text{Platforms}$$
 
-### Playwright Test Configuration
-
-`playwright.config.ts` controls fallback CLI runs:
-
-- `timeout`: `120,000 ms` (2 minutes per test execution).
-- `expect.timeout`: `30,000 ms` (30 seconds per assertion).
-- `fullyParallel`: `true` (executes projects simultaneously).
-- `ignoreHTTPSErrors`: `true` (bypasses SSL certificate warnings on target portals).
-
-### Environment Variables
-
-Configuration options defined in `.env`:
-
-```env
-# Server Port (Default: 3000)
-PORT=3000
-
-# CI Environment Flag
-CI=false
-```
+### Execution Progress
+- **Live SSE Streaming**: Displays completion percentage bar, elapsed time, and status badges (`PENDING`, `RUNNING`, `PASS`, `FAIL`, `CANCELLED`).
+- **Stop Execution**: Immediate button to halt running child processes and cancel pending queue items safely.
 
 ---
 
-## How to Use
+## Reporting System
 
-### 1. Launch the Server
+Reports are generated automatically upon test execution completion and updated on disk.
 
-Start the application server:
+### Interactive HTML Report (`reports/execution-report.html`)
 
-```bash
-npm start
-```
+A standalone, interactive report displaying session histories and test outcomes.
 
-You should see output similar to:
+- **Date-Wise Navigation Tabs**: Group run sessions by execution date (`YYYY-MM-DD`).
+- **Date Search Picker**: Search and filter test runs by calendar date.
+- **Embedded Snapshot Data (`__REPORT_DATA__`)**: Contains full JSON payload for client-side filtering and accordion interaction.
+- **Error Trace Modal**: Click **View Details** on failed tests to open a popup with the complete stack trace and copy-to-clipboard functionality.
+- **Screenshot Links**: Click **View Screenshot** to view captured full-resolution image artifacts.
 
-```text
-┌─────────────────────────────────────────────────────┐
-│       VISA TEST AUTOMATION DASHBOARD                │
-├─────────────────────────────────────────────────────┤
-│  Local:   http://localhost:3000                     │
-│                                                     │
-│  Place test files in: tests/spec/                   │
-│  File pattern: *.spec.ts or *.spec.js               │
-│  Reports saved to: reports/                         │
-└─────────────────────────────────────────────────────┘
-```
+### Excel Report (`reports/test-reports.xlsx`)
 
-### 2. Open the Dashboard
+An automated Excel workbook generated using `ExcelJS`.
 
-Open your web browser and navigate to: `http://localhost:3000`
-
-### 3. Select Tests & Target Configurations
-
-1. **Test Scripts**: Select checkboxes for individual test files (e.g., `bahrain-visa.spec.ts`).
-2. **Browsers**: Select target browsers (e.g., `Chrome`).
-3. **Devices**: Select target viewports (e.g., `Desktop`, `iPhone 14`).
-4. **Execution Summary Card**: Observe the real-time execution target calculation:
-   $$\text{Selected Executions} = \text{Tests} \times \text{Browsers} \times \text{Devices}$$
-
-### 4. Execute Tests
-
-- Click **Run Selected** to run chosen tests.
-- Click **Run All** to run every spec file in `tests/spec/`.
-
-### 5. Monitor Live Progress
-
-Watch the **Run Progress** section update in real-time over Server-Sent Events (SSE):
-- View overall session completion percentage bar.
-- Track status badges (`Pending` $\rightarrow$ `Running` $\rightarrow$ `PASS` / `FAIL`).
-- Review live duration timers and pass/fail counters.
-
-### 6. Analyze Reports
-
-Upon session completion:
-- View the embedded **HTML Report** directly inside the dashboard panel.
-- Click **Open HTML Report** to open the full interactive report in a new tab.
-- Click **Download Excel Report** to save `report.xlsx` with embedded failure screenshots.
-- Click **Open Reports Folder** to reveal output files in your system file explorer.
-
----
-
-## Execution Logic
-
-Every run operation follows a strict execution matrix logic:
-
-$$\text{Total Executions} = N_{\text{Tests}} \times M_{\text{Browsers}} \times K_{\text{Devices}}$$
-
-### Example Execution Calculation
-
-If you select:
-- **2 Test Scripts**: `bahrain-visa.spec.ts`, `azerbaijan-visa.spec.ts`
-- **1 Browser**: `Chrome`
-- **3 Devices**: `Desktop`, `iPhone 14`, `Android`
-
-$$\text{Total Executions} = 2 \times 1 \times 3 = 6 \text{ Executions}$$
-
-### Session Architecture Definitions
-
-- **Execution Session (`runId`)**: One user click on "Run Selected" or "Run All" creates a single unique session ID (`UUIDv4`) and increments the total run history counter (`Run #N`).
-- **Combination Item**: A single test script bound to a specific browser and device project (e.g., `bahrain-visa.spec.ts [Desktop-Chrome]`).
-- **Dynamic Config**: Generated at runtime as `.temp-run-config.mjs` to ensure Playwright only executes the exact requested matrix, avoiding wasteful runs.
-
----
-
-## Run Progress
-
-The **Run Progress** panel maintains a strict **Single Source of Truth** synchronized with backend event streams.
-
-### Combination State Lifecycle
-
-```text
-[ Pending ]  ───( Test Starts )───►  [ Running ]  ───( Test Finishes )───►  [ PASS / FAIL / SKIPPED ]
-```
-
-### Counter Definitions
-
-- **Total**: Total target combinations ($N \times M \times K$).
-- **Completed**: Sum of all finished executions ($\text{Pass} + \text{Fail} + \text{Skipped}$).
-- **Pending**: Remaining queued items ($\text{Total} - \text{Completed}$).
-- **Progress Bar Percentage**: Calculated dynamically:
-  $$\text{Progress \%} = \left( \frac{\text{Completed}}{\text{Total}} \right) \times 100$$
-
-> **Guaranteed Lifecycle Rule:** When a session finishes, the dashboard automatically verifies that no item remains in `Pending` state. Any remaining unresolved combination is updated to its final result from the test runner.
-
----
-
-## HTML Report
-
-The interactive HTML report is located at `reports/report.html`.
-
-### Key Capabilities
-
-1. **Date-Wise Navigation Tabs**: Automatically groups runs into calendar date tabs (`YYYY-MM-DD`).
-2. **Session Accordions**: Each execution session is saved chronologically under its execution timestamp.
-3. **Embedded Screenshots**: Screenshot thumbnails are encoded as Base64 strings, rendering the HTML file completely self-contained and viewable offline without external file dependencies.
-4. **Search & Filter Controls**: Filter results by test status (`ALL`, `PASS`, `FAIL`) or search by test name and device keyword.
-5. **Captured Payment URLs**: Payment gateway links captured during execution are highlighted and clickable.
-
----
-
-## Excel Report
-
-The Excel report is saved to `reports/report.xlsx` using `ExcelJS`.
-
-### Structure & Highlights
-
-- **Native Image Embedding**: Screenshot images are embedded directly into worksheet cells (`Column N`), styled with fixed cell row heights (120pt) and image dimensions.
+- **Date Worksheets**: Creates or appends rows to date sheets matching execution dates (`YYYY-MM-DD`).
 - **Color-Coded Statuses**:
-  - `PASS`: Light green fill (`#D4EDDA`) with dark green text (`#155724`).
-  - `FAIL`: Light red fill (`#F8D7DA`) with dark red text (`#721C24`).
-- **Auto-Filter & Frozen Header**: Headers are frozen on Row 1 with automatic filtering enabled across all columns.
-- **Summary Worksheet**: Contains high-level session statistics, overall pass rate percentages, and run metadata.
+  - `PASS` / `RETRY_PASS`: Soft green background with dark green text.
+  - `FAIL`: Soft red background with dark red text.
+  - `RUNNING`: Soft blue background with dark blue text.
+- **Direct Screenshot Links**: Hyperlinks pointing directly to captured images in `/screenshots`.
 
----
+### Shared Screenshots Directory (`/screenshots`)
 
-## Reports Folder
-
-All runtime generated files are stored in `reports/`:
-
+Screenshots captured during test execution are saved to a central `/screenshots` directory:
 ```text
-reports/
-├── report.xlsx           # Generated Excel report containing embedded screenshot images
-├── report.html           # Standalone interactive offline HTML report
-├── report-history.json   # Persistent JSON database tracking historical test runs across sessions
-└── screenshots/          # Image files captured on test failure
-    ├── bahrain-visa-Bahrain-Visa-Application-Desktop-Chrome.png
-    └── bahrain-visa-Bahrain-Visa-Application-iPhone-14-Chrome.png
+screenshots/
+└── <timestamp>/
+    └── <spec-filename>/
+        └── <step-name>.png
 ```
+Both the HTML report and Excel workbook reference this shared directory, eliminating redundant copies.
 
 ---
 
-## Adding a New Test
+## Adding & Writing Custom Tests
 
-To add a new automated visa workflow test:
+To add a new automated test suite to the framework:
 
 ### Step 1: Create a Spec File
 
-Create a new file in `tests/spec/` with the extension `.spec.ts`:
+Place your test file in the directory configured by `TEST_DIR` (e.g., `tests/spec/`):
 
 ```bash
-touch tests/spec/dubai-visa.spec.ts
+touch tests/spec/login-workflow.spec.ts
 ```
 
-### Step 2: Implement Test Script
+### Step 2: Implement Test Using `baseTest` Fixture
 
-Use the shared `baseTest` fixture so your test inherits failure handling, screenshot capture, and CAPTCHA helpers:
+Import `test` and `expect` from `utils/baseTest.ts` to automatically inherit execution timing, error trapping, and screenshot helpers:
 
 ```typescript
 import { test, expect } from '../../utils/baseTest';
+import { captureScreenshot } from '../../utils/screenshot';
 
-test('Dubai Visa Application', async ({ page, waitForCaptcha }) => {
-  // 1. Set up CAPTCHA listener if needed
-  const captchaPromise = waitForCaptcha(page);
+test('User Login and Dashboard Workflow', async ({ page }, testInfo) => {
+  // 1. Navigate to target portal
+  await page.goto('https://example.com/login');
 
-  // 2. Navigate to visa application portal
-  await page.goto('https://example-visa-portal.com/apply');
+  // 2. Perform form actions
+  await page.getByPlaceholder('Email').fill('user@example.com');
+  await page.getByPlaceholder('Password').fill('SecurePassword123');
+  await page.getByRole('button', { name: 'Sign In' }).click();
 
-  // 3. Fill form fields
-  await page.getByRole('textbox', { name: 'Full Name' }).fill('John Doe');
-  await page.getByRole('textbox', { name: 'Passport Number' }).fill('A12345678');
+  // 3. Verify landing page
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15000 });
 
-  // 4. Resolve CAPTCHA
-  const captchaText = await captchaPromise;
-  await page.getByRole('textbox', { name: 'Captcha' }).fill(captchaText);
-
-  // 5. Submit application
-  await page.getByRole('button', { name: 'Submit' }).click();
-
-  // 6. Verify payment page redirect
-  await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible({ timeout: 30000 });
+  // 4. Capture step screenshot (saved if Screenshot Capture mode is ON)
+  await captureScreenshot(page, 'dashboard-landing', testInfo);
 });
 ```
 
 ### Step 3: Refresh Dashboard
 
-Reload the Web Dashboard (`http://localhost:3000`). The application will automatically detect `dubai-visa.spec.ts` and list it under **Available Tests**.
+Reload or open the Web Dashboard (`http://localhost:3000`). The system will auto-detect the new file and display it in the **Test Suites & Scripts** list.
 
 ---
 
 ## Troubleshooting
 
-### Common Issues & Fixes
-
-| Problem | Cause | Solution |
+| Problem | Potential Cause | Solution |
 | :--- | :--- | :--- |
-| **Port 3000 in Use** | Another node instance or server is running on port `3000`. | Stop the existing process or run: <br>`npx kill-port 3000` or change `PORT=3001` in `.env`. |
-| **Playwright Executable Missing** | Playwright browser binaries are not installed. | Run: <br>`npx playwright install chromium` |
-| **Test Timeout Exceeded (30000ms)** | Target visa website loaded slowly or captcha failed. | Check network connectivity or increase timeout in `playwright.config.ts`. |
-| **"tests/spec directory not found"** | Missing test directory structure. | Ensure `tests/spec/` exists at root level. |
-| **Excel File Locked** | `reports/report.xlsx` is open in Microsoft Excel while a run completes. | Close Excel before running tests so the file writer can save updates. |
+| **Port 3000 in Use** | Another process is bound to port 3000. | Stop the conflicting process or change `PORT=3001` in `.env`. |
+| **Playwright Executable Missing** | Playwright browser binaries are not installed. | Run `npx playwright install chromium` or `npx playwright install`. |
+| **Tests Missing from Dashboard** | `TEST_DIR` path is misconfigured or directory is empty. | Check `TEST_DIR` setting in `.env` and verify spec files end with `.spec.ts` or `.spec.js`. |
+| **System Memory Throttled** | Available RAM is low (< 600 MB). | The Memory Guard auto-throttles concurrency. Reduce Batch Concurrency or close heavy background apps. |
+| **Excel File Locked Warning** | Excel report file is locked or open in another application. | Close `reports/test-reports.xlsx` in Excel so the server can write updates. |
 
 ---
 
 ## Best Practices
 
-1. **Use `baseTest` Fixture**: Always import `test` and `expect` from `utils/baseTest` instead of `@playwright/test` to ensure automatic screenshot capture and CAPTCHA tracking.
-2. **Handle Dynamic Selectors**: Use role-based or accessible locators (`getByRole`, `getByLabel`, `getByPlaceholder`) to make scripts resilient against UI updates.
-3. **Resilient File Uploads**: Use explicit input targeting for document upload fields (`input[type="file"]`) and validate success state elements.
-4. **Clean Asset Management**: Store reusable upload test assets inside `tests/assets/`.
+1. **Use `baseTest` Import**: Always import `test` and `expect` from `utils/baseTest` instead of `@playwright/test` to ensure lifecycle hooks and status updates function correctly.
+2. **Accessible Locators**: Prefer role-based and accessible locators (`getByRole`, `getByLabel`, `getByPlaceholder`) over brittle CSS paths.
+3. **Explicit Screenshot Steps**: Call `captureScreenshot(page, 'step-name', testInfo)` at critical validation steps.
+4. **Environment Configuration**: Store environment-specific URLs or credentials in `.env` or configuration files rather than hardcoding in specs.
 
 ---
 
@@ -538,33 +419,12 @@ Reload the Web Dashboard (`http://localhost:3000`). The application will automat
 
 - **Core Engine**: Node.js, TypeScript, Express.js
 - **Browser Automation**: Playwright (`@playwright/test`)
-- **Report Engines**: ExcelJS, HTML5, Base64 Image Encoder
-- **Real-Time Communication**: Server-Sent Events (SSE)
-- **UI & Design**: Vanilla JavaScript (ES6+), FontAwesome Icons, Modern CSS3 Flexbox/Grid
-
----
-
-## FAQ
-
-#### Q: Can I run tests in visible (non-headless) browser mode?
-**A:** Yes. Uncheck the **Headless Mode** checkbox in the Web Dashboard UI or run `npm run test:headed` from the terminal.
-
-#### Q: How are screenshot images stored in the Excel report?
-**A:** `reportGenerator.js` reads failure screenshots as binary buffers and embeds them directly into Excel cell objects using `ExcelJS` native drawing API.
-
-#### Q: Can I view HTML reports on a machine without internet access?
-**A:** Yes. `htmlReportGenerator.js` embeds all CSS styles, JavaScript logic, and screenshot images as inline Base64 data URLs, making `report.html` 100% self-contained and offline-capable.
+- **Reporting Engines**: ExcelJS, HTML5, FontAwesome
+- **Real-Time Event Engine**: Server-Sent Events (SSE)
+- **Frontend UI**: Vanilla JavaScript (ES6+), CSS Flexbox & Grid
 
 ---
 
 ## License
 
 This project is licensed under the [ISC License](LICENSE).
-
----
-
-## Author
-
-**Visa Test Automation Team**
-- Email: `support@example.com`
-- Repository: `https://github.com/your-username/visa-test-automation`

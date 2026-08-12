@@ -1,7 +1,7 @@
 {
-  "name": "visa-test-automation",
+  "name": "playwright-test-automation",
   "version": "1.0.0",
-  "description": "End-to-end visa test automation with web dashboard and HTML reporting",
+  "description": "End-to-end test automation framework with web dashboard and HTML reporting",
   "main": "server/index.js",
   "scripts": {
     "dev": "node server/index.js",

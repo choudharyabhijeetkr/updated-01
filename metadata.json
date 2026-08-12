@@ -1,6 +1,6 @@
 {
-  "name": "Visa Test Automation",
-  "description": "End-to-end visa test automation with web dashboard and HTML reporting",
+  "name": "Playwright Test Automation",
+  "description": "Generic end-to-end test automation platform and web dashboard with interactive HTML & Excel reporting",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
