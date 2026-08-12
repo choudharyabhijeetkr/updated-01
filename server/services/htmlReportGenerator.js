@@ -271,22 +271,6 @@ function generateReportHtml(data) {
       background: rgba(255, 255, 255, 0.25);
       color: #ffffff;
     }
-    .demo-pill {
-      background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
-      font-size: 9px;
-      padding: 1px 4px;
-      border-radius: 4px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-    .date-tab.active .demo-pill {
-      background: rgba(255, 255, 255, 0.3);
-      color: #ffffff;
-      border-color: transparent;
-    }
 
     .session-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
     .session-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
@@ -542,61 +526,12 @@ function generateReportHtml(data) {
           return dateKey;
         }
 
-        // Build Demo Sessions for past days if fewer than 3 unique dates exist
+        // Build date map from real sessions
         const dateMap = new Map();
         for (const s of sessions) {
           const k = formatDateKey(s.createdAt);
           if (!dateMap.has(k)) dateMap.set(k, []);
           dateMap.get(k).push(s);
-        }
-
-        const now = new Date();
-        // Generate up to 4 demo tabs if missing to test UI multi-tab behavior
-        const demoPastDays = [1, 2, 3, 4];
-        for (const daysAgo of demoPastDays) {
-          const d = new Date(now);
-          d.setDate(now.getDate() - daysAgo);
-          const demoKey = formatDateKey(d);
-
-          if (!dateMap.has(demoKey)) {
-            const demoExecId1 = 'demo-exec-' + daysAgo + '-1';
-            const demoExecId2 = 'demo-exec-' + daysAgo + '-2';
-            executionsById[demoExecId1] = {
-              id: demoExecId1,
-              testScript: 'e-visa-cambodia.spec.ts',
-              device: 'Desktop',
-              browser: 'Chromium',
-              status: 'PASS',
-              duration: 18.4,
-              retries: 0,
-              paymentUrl: 'https://evisa.gov.kh/payment/demo',
-              screenshotPath: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400',
-              error: ''
-            };
-            executionsById[demoExecId2] = {
-              id: demoExecId2,
-              testScript: 'congo-evisa.spec.ts',
-              device: 'Desktop',
-              browser: 'Firefox',
-              status: 'FAIL',
-              duration: 12.1,
-              retries: 3,
-              paymentUrl: 'N/A',
-              screenshotPath: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400',
-              error: 'Element #submit-btn timeout after 10000ms waiting for visible state'
-            };
-
-            const demoSession = {
-              id: 'demo-session-' + daysAgo,
-              runNumber: 'Demo-' + daysAgo,
-              createdAt: d.toISOString(),
-              status: 'FAIL',
-              isDemo: true,
-              executionIds: [demoExecId1, demoExecId2]
-            };
-            dateMap.set(demoKey, [demoSession]);
-            sessions.push(demoSession);
-          }
         }
 
         // Get sorted date keys (descending)
@@ -616,13 +551,10 @@ function generateReportHtml(data) {
           '<div class="date-tabs-container" id="dateTabsContainer">';
 
         for (const dateKey of sortedDateKeys) {
-          const sessionList = dateMap.get(dateKey) || [];
-          const isDemo = sessionList.some(s => s.isDemo);
-          const demoBadge = isDemo ? '<span class="demo-pill">Demo</span>' : '';
           const isActive = dateKey === latestDateKey ? ' active' : '';
           
           tabsHtml += '<button type="button" class="date-tab' + isActive + '" data-date-key="' + dateKey + '">' +
-            '<i class="far fa-calendar-check"></i> ' + formatDateLabel(dateKey) + (demoBadge ? ' ' + demoBadge : '') +
+            '<i class="far fa-calendar-check"></i> ' + formatDateLabel(dateKey) +
           '</button>';
         }
 
@@ -634,20 +566,21 @@ function generateReportHtml(data) {
         let cardsHtml = '<div id="sessionCardsContainer">';
         const sortedSessions = [...sessions].reverse();
 
-        for (const session of sortedSessions) {
-          const sessionDateKey = formatDateKey(session.createdAt);
-          const execIds = session.executionIds || [];
-          let execs = execIds.map(id => executionsById[id]).filter(Boolean);
+        if (sortedSessions.length === 0) {
+          cardsHtml += '<div style="text-align: center; padding: 40px 20px; color: var(--text-muted); background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius);"><i class="fas fa-inbox" style="font-size: 32px; margin-bottom: 12px; color: var(--accent);"></i><p style="font-size: 14px; font-weight: 600;">No execution sessions recorded yet.</p><p style="font-size: 12px; margin-top: 4px;">Run test executions from the dashboard to populate the report.</p></div>';
+        } else {
+          for (const session of sortedSessions) {
+            const sessionDateKey = formatDateKey(session.createdAt);
+            const execIds = session.executionIds || [];
+            let execs = execIds.map(id => executionsById[id]).filter(Boolean);
 
-          if (settings.hideIncompleteTests) {
-            execs = execs.filter(exec => exec.status === 'PASS' || exec.status === 'FAIL');
-          }
+            if (settings.hideIncompleteTests) {
+              execs = execs.filter(exec => exec.status === 'PASS' || exec.status === 'FAIL');
+            }
 
-          const demoHeaderBadge = session.isDemo ? ' <span class="demo-pill" style="margin-left: 8px;">Demo Data</span>' : '';
-
-          cardsHtml += '<div class="session-card" data-session-date="' + sessionDateKey + '">' +
-            '<div class="session-header">' +
-              '<div class="session-title"><i class="fas fa-layer-group" style="color: var(--accent);"></i> Execution Session #' + session.runNumber + demoHeaderBadge + '</div>' +
+            cardsHtml += '<div class="session-card" data-session-date="' + sessionDateKey + '">' +
+              '<div class="session-header">' +
+                '<div class="session-title"><i class="fas fa-layer-group" style="color: var(--accent);"></i> Execution Session #' + session.runNumber + '</div>' +
               '<div class="session-meta">' +
                 '<span><i class="far fa-clock"></i> Date & Time: ' + new Date(session.createdAt).toLocaleString() + '</span>' +
                 '<span><i class="fas fa-tasks"></i> Total Executions: ' + execs.length + '</span>' +
