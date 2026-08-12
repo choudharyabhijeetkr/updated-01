@@ -37,7 +37,7 @@ function readResultJsonForExecution(testKey, device, browser) {
   }
 }
 
-async function runSingleExecution({ testFile, browser, device, retries = 3, headless = true, enableScreenshotCapture = false, sessionTimestamp }, onEvent) {
+async function runSingleExecution({ testFile, browser, device, retries = 2, headless = true, enableScreenshotCapture = false, sessionTimestamp }, onEvent) {
   const testKey = path.basename(testFile).replace(/\.(spec|test)\.(ts|js)$/, '');
   cleanTempResultForExecution(testKey, device, browser);
 

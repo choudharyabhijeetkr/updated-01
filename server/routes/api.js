@@ -151,7 +151,7 @@ router.get('/sessions/:id', (req, res) => {
 // ── POST /api/run ── start a new execution session
 router.post('/run', (req, res) => {
   try {
-    const { testFiles, browsers, devices, retries = 3, headless = true, batchSize = 5 } = req.body;
+    const { testFiles, browsers, devices, retries = 2, headless = true, batchSize = 5 } = req.body;
 
     if (!Array.isArray(testFiles) || testFiles.length === 0) {
       return res.status(400).json({ error: 'At least one testFile is required' });

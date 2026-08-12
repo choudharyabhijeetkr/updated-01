@@ -103,7 +103,7 @@ class QueueManager {
   }
 
   createSession(options) {
-    const { browsers, devices, testFiles, retries = 3, headless = true, batchSize = 5 } = options;
+    const { browsers, devices, testFiles, retries = 2, headless = true, batchSize = 5 } = options;
     const sessionId = uuidv4();
     const runNumber = this.getCompletedRunsCount() + 1;
 

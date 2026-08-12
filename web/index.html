@@ -115,11 +115,20 @@
 
               <div class="input-card">
                 <div class="input-card-header">
-                  <label for="retryCount"><i class="fas fa-rotate-right"></i> Max Retries</label>
+                  <label for="retryCount">
+                    <i class="fas fa-rotate-right"></i> Max Retries
+                    <span class="info-tooltip-container" tabindex="0">
+                      <i class="fas fa-info-circle tooltip-icon"></i>
+                      <span class="tooltip-popup">
+                        <strong>Max Retries:</strong><br>
+                        Automatically re-executes test steps when failures occur (e.g., temporary network glitches, slow portal/API responses, missing or delayed DOM locators, CAPTCHA interceptions, or element timeouts).
+                      </span>
+                    </span>
+                  </label>
                   <span class="input-badge">0 - 10 Retries</span>
                 </div>
                 <div class="input-card-body">
-                  <input type="number" id="retryCount" value="3" min="0" max="10">
+                  <input type="number" id="retryCount" value="2" min="0" max="10">
                   <span class="input-hint">Auto-retry attempts on step failure</span>
                 </div>
               </div>

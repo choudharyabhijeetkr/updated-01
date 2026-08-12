@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const browsers = getSelectedBrowsers();
     const devices = getSelectedDevices();
-    const retries = parseInt(document.getElementById('retryCount')?.value || '3', 10);
+    const retries = parseInt(document.getElementById('retryCount')?.value || '2', 10);
     const rawBatchSize = parseInt(document.getElementById('batchSize')?.value || '5', 10);
     const batchSize = isNaN(rawBatchSize) ? 5 : Math.min(10, Math.max(1, rawBatchSize));
     const headless = document.getElementById('headlessMode')?.checked ?? true;
